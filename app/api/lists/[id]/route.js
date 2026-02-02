@@ -20,6 +20,7 @@ export async function GET(request, { params }) {
     );
   }
 
+
   return NextResponse.json(list, { status: 200 });
 }
 
