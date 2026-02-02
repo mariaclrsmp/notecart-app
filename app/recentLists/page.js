@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon } from "lucide-react";
 import { listsService } from "@/lib/services/listsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RecentLists() {
+    const { user } = useAuth();
     const [lists, setLists] = useState([]);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedList, setSelectedList] = useState(null);
@@ -15,21 +17,23 @@ export default function RecentLists() {
     const [editedItems, setEditedItems] = useState([]);
     const [editCurrentItem, setEditCurrentItem] = useState("");
 
-    useEffect(() => {
-        loadLists();
-    }, []);
-
-    const loadLists = async () => {
+    const loadLists = useCallback(async () => {
+        if (!user) return;
         try {
-            const fetchedLists = await listsService.getAll();
+            const token = await user.getIdToken();
+            const fetchedLists = await listsService.getAll(token);
             setLists(fetchedLists);
         } catch (error) {
             console.error('Error loading lists:', error);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        loadLists();
+    }, [loadLists]);
 
     const getListIcon = (type) => {
-        switch(type) {
+        switch (type) {
             case "grocery":
                 return <ShoppingCart className="w-6 h-6" />;
             case "healthcare":
@@ -53,9 +57,11 @@ export default function RecentLists() {
         return labels[type] || type;
     };
 
-    const deleteList = async (id) => {
+    const handleDeleteList = async (id) => {
+        if (!confirm("Deseja realmente excluir esta lista?")) return;
         try {
-            await listsService.delete(id);
+            const token = await user.getIdToken();
+            await listsService.delete(id, token);
             await loadLists();
         } catch (error) {
             console.error('Error deleting list:', error);
@@ -87,11 +93,12 @@ export default function RecentLists() {
 
     const handleSaveEdit = async () => {
         try {
+            const token = await user.getIdToken();
             await listsService.update(selectedList.id, {
                 name: editedListName,
                 type: editedListType,
                 items: editedItems
-            });
+            }, token);
             await loadLists();
             setSelectedList({ ...selectedList, name: editedListName, type: editedListType, items: editedItems });
             setIsEditMode(false);
@@ -163,7 +170,7 @@ export default function RecentLists() {
                                                 <p className="text-xs sm:text-sm text-gray-500">{getListTypeLabel(list.type)}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => deleteList(list.id)} className="text-gray-400 hover:text-red-500 transition-colors duration-200" title="Excluir lista">
+                                        <button onClick={() => handleDeleteList(list.id)} className="text-gray-400 hover:text-red-500 transition-colors duration-200" title="Excluir lista">
                                             <Trash2 className="w-5 h-5" />
                                         </button>
                                     </div>
@@ -198,141 +205,141 @@ export default function RecentLists() {
                         </div>
                     )}
 
-            {showDetailsModal && selectedList && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
+                    {showDetailsModal && selectedList && (
+                        <div className="fixed inset-0 z-50 overflow-y-auto">
+                            <div className="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
-                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                <div className="sm:flex sm:items-start">
-                                    <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
-                                        {getListIcon(isEditMode ? editedListType : selectedList.type)}
-                                    </div>
-                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        {isEditMode ? (
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome da lista:</label>
-                                                    <input
-                                                        type="text"
-                                                        value={editedListName}
-                                                        onChange={(e) => setEditedListName(e.target.value)}
-                                                        className="w-full rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de lista:</label>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={editedListType}
-                                                            onChange={(e) => setEditedListType(e.target.value)}
-                                                            className="w-full rounded-lg bg-transparent text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
-                                                        >
-                                                            <option value="grocery">Mercado</option>
-                                                            <option value="healthcare">Saúde</option>
-                                                            <option value="personalcare">Cuidados pessoais</option>
-                                                            <option value="wishlist">Lista de desejos</option>
-                                                        </select>
-                                                        <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-                                                    </div>
-                                                </div>
+                            <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+                                <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div className="sm:flex sm:items-start">
+                                            <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
+                                                {getListIcon(isEditMode ? editedListType : selectedList.type)}
                                             </div>
-                                        ) : (
-                                            <>
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">{selectedList.name}</h3>
-                                                <p className="text-sm text-gray-500 mb-4">{getListTypeLabel(selectedList.type)}</p>
-                                            </>
-                                        )}
-                                        <button className="absolute right-6 top-3 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }} aria-label="Fechar">
-                                            <XIcon className="w-5 h-5" />
-                                        </button>
-
-                                        <div className="mt-4">
-                                            <h4 className="text-sm font-medium text-gray-700 mb-3">Itens da lista ({isEditMode ? editedItems.length : selectedList.items?.length || 0})</h4>
-                                            {isEditMode && (
-                                                <div className="mb-3">
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={editCurrentItem}
-                                                            onChange={(e) => setEditCurrentItem(e.target.value)}
-                                                            onKeyPress={handleEditKeyPress}
-                                                            placeholder="Digite um item"
-                                                            className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleAddEditItem}
-                                                            className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {(isEditMode ? editedItems : selectedList.items)?.length > 0 ? (
-                                                <div className="max-h-96 overflow-y-auto space-y-2">
-                                                    {(isEditMode ? editedItems : selectedList.items).map((item) => (
-                                                        <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
-                                                            <div className="flex items-center">
-                                                                <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                                                                <span className="text-sm text-gray-700">{item.name}</span>
+                                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                                {isEditMode ? (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Nome da lista:</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editedListName}
+                                                                onChange={(e) => setEditedListName(e.target.value)}
+                                                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de lista:</label>
+                                                            <div className="relative">
+                                                                <select
+                                                                    value={editedListType}
+                                                                    onChange={(e) => setEditedListType(e.target.value)}
+                                                                    className="w-full rounded-lg bg-transparent text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="grocery">Mercado</option>
+                                                                    <option value="healthcare">Saúde</option>
+                                                                    <option value="personalcare">Cuidados pessoais</option>
+                                                                    <option value="wishlist">Lista de desejos</option>
+                                                                </select>
+                                                                <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                                                             </div>
-                                                            {isEditMode && (
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{selectedList.name}</h3>
+                                                        <p className="text-sm text-gray-500 mb-4">{getListTypeLabel(selectedList.type)}</p>
+                                                    </>
+                                                )}
+                                                <button className="absolute right-6 top-3 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }} aria-label="Fechar">
+                                                    <XIcon className="w-5 h-5" />
+                                                </button>
+
+                                                <div className="mt-4">
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Itens da lista ({isEditMode ? editedItems.length : selectedList.items?.length || 0})</h4>
+                                                    {isEditMode && (
+                                                        <div className="mb-3">
+                                                            <div className="flex gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={editCurrentItem}
+                                                                    onChange={(e) => setEditCurrentItem(e.target.value)}
+                                                                    onKeyPress={handleEditKeyPress}
+                                                                    placeholder="Digite um item"
+                                                                    className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                                                />
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleRemoveEditItem(item.id)}
-                                                                    className="text-orange-500 hover:text-red-500 transition-colors duration-200"
+                                                                    onClick={handleAddEditItem}
+                                                                    className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
                                                                 >
-                                                                    <XIcon className="w-4 h-4" />
+                                                                    <Plus className="w-4 h-4" />
                                                                 </button>
-                                                            )}
+                                                            </div>
                                                         </div>
-                                                    ))}
+                                                    )}
+                                                    {(isEditMode ? editedItems : selectedList.items)?.length > 0 ? (
+                                                        <div className="max-h-96 overflow-y-auto space-y-2">
+                                                            {(isEditMode ? editedItems : selectedList.items).map((item) => (
+                                                                <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                                                                    <div className="flex items-center">
+                                                                        <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
+                                                                        <span className="text-sm text-gray-700">{item.name}</span>
+                                                                    </div>
+                                                                    {isEditMode && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemoveEditItem(item.id)}
+                                                                            className="text-orange-500 hover:text-red-500 transition-colors duration-200"
+                                                                        >
+                                                                            <XIcon className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500 text-center py-4">Nenhum item adicionado ainda</p>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-500 text-center py-4">Nenhum item adicionado ainda</p>
-                                            )}
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                        {isEditMode ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSaveEdit}
+                                                    className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
+                                                >
+                                                    Salvar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelEdit}
+                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleEditMode}
+                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                    Editar
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                {isEditMode ? (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={handleSaveEdit}
-                                            className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                                        >
-                                            Salvar
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleCancelEdit}
-                                            className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer"
-                                        >
-                                            Cancelar
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={handleEditMode}
-                                            className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                            Editar
-                                        </button>
-                                    </>
-                                )}
-                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
                 </div>
             </main>
         </div>

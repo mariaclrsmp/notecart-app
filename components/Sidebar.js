@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, Home, List, Share2, Settings, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, Home, List, Share2, Settings, X, LogOut } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, logout, loading } = useAuth();
 
     useEffect(() => {
         const savedState = localStorage.getItem("sidebarCollapsed");
@@ -32,6 +35,15 @@ export default function Sidebar() {
         setIsMobileOpen(false);
     };
 
+    const handleLogout = async () => {
+        try {
+            await logout();
+            router.push("/login");
+        } catch (error) {
+            console.error("Erro ao fazer logout:", error);
+        }
+    };
+
     const isActive = (path) => pathname === path;
 
     const menuItems = [
@@ -40,6 +52,28 @@ export default function Sidebar() {
         { path: "/sharedLists", label: "Listas Compartilhadas", icon: Share2 },
         { path: "/settings", label: "Configurações", icon: Settings }
     ];
+
+    const getUserInitial = () => {
+        if (user?.displayName) {
+            return user.displayName.charAt(0).toUpperCase();
+        }
+        if (user?.email) {
+            return user.email.charAt(0).toUpperCase();
+        }
+        return "U";
+    };
+
+    const getUserDisplayName = () => {
+        return user?.displayName || "Usuário";
+    };
+
+    const getUserEmail = () => {
+        return user?.email || "";
+    };
+
+    if (loading) {
+        return null;
+    }
 
     return (
         <>
@@ -58,11 +92,9 @@ export default function Sidebar() {
                 ></div>
             )}
 
-            <aside className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 z-40 ${
-                isCollapsed ? 'w-20' : 'w-64'
-            } ${
-                isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            }`}>
+            <aside className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 z-40 ${isCollapsed ? 'w-20' : 'w-64'
+                } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                }`}>
                 <div className="flex flex-col h-full">
                     <div className="p-6 flex items-center justify-between border-b border-gray-100">
                         <div className="flex items-center space-x-3">
@@ -88,7 +120,7 @@ export default function Sidebar() {
                             <X className="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
-                    
+
                     <nav className="flex-1 p-4 space-y-2">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
@@ -97,11 +129,10 @@ export default function Sidebar() {
                                     key={item.path}
                                     href={item.path}
                                     onClick={closeMobileSidebar}
-                                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} px-4 py-3 rounded-lg transition-all duration-200 ${
-                                        isActive(item.path)
-                                            ? 'bg-orange-100 text-orange-600 font-medium'
-                                            : 'text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} px-4 py-3 rounded-lg transition-all duration-200 ${isActive(item.path)
+                                        ? 'bg-orange-100 text-orange-600 font-medium'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
                                     title={isCollapsed ? item.label : ''}
                                 >
                                     <Icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
@@ -111,17 +142,36 @@ export default function Sidebar() {
                         })}
                     </nav>
 
-                    <div className="p-4 border-t border-gray-100">
-                        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-                            <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-semibold shrink-0">
-                                N
+                    <div className="p-4 border-t border-gray-100 cursor-pointer" onClick={toggleSidebar}>
+                        <div className={`flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between'}`}>
+                            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3 flex-1 min-w-0'}`}>
+                                {user?.photoURL ? (
+                                    <Image
+                                        src={user.photoURL}
+                                        alt="Foto do usuário"
+                                        width={40}
+                                        height={40}
+                                        className="rounded-full shrink-0"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-semibold shrink-0">
+                                        {getUserInitial()}
+                                    </div>
+                                )}
+                                {!isCollapsed && (
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-800 truncate">{getUserDisplayName()}</p>
+                                        <p className="text-xs text-gray-500 truncate">{getUserEmail()}</p>
+                                    </div>
+                                )}
                             </div>
-                            {!isCollapsed && (
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-800 truncate">Usuário</p>
-                                    <p className="text-xs text-gray-500 truncate">user@email.com</p>
-                                </div>
-                            )}
+                            <button
+                                onClick={handleLogout}
+                                className={`p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200 ${isCollapsed ? '' : 'shrink-0'}`}
+                                title="Sair"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
                         </div>
                     </div>
                 </div>
