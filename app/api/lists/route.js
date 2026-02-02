@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAllLists, createList } from '@/lib/server/firebase/listsService';
 import { verifyAuth } from '@/lib/server/authMiddleware';
 
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   const userId = await verifyAuth(request);
   if (!userId) {
