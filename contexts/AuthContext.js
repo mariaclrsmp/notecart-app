@@ -22,14 +22,18 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            console.log('[AuthContext] onAuthStateChanged:', user ? user.email : 'no user');
             setUser(user);
             setLoading(false);
         });
 
+        console.log('[AuthContext] Checking for redirect result...');
         getRedirectResult(auth)
             .then((result) => {
                 if (result) {
                     console.log('[AuthContext] Google login successful via redirect:', result.user.email);
+                } else {
+                    console.log('[AuthContext] No redirect result found');
                 }
             })
             .catch((error) => {

@@ -38,10 +38,8 @@ export default function LoginPage() {
 
         try {
             await loginWithGoogle();
-            router.push("/");
         } catch (err) {
             setError(getErrorMessage(err.code));
-        } finally {
             setLoading(false);
         }
     };
