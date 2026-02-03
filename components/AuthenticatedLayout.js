@@ -23,7 +23,7 @@ export default function AuthenticatedLayout({ children }) {
                 router.push("/");
             }
         }
-    }, [user, loading, isPublicRoute, router]);
+    }, [user, loading, isPublicRoute, router, pathname]);
 
     if (loading) {
         return (

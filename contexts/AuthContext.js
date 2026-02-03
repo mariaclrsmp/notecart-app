@@ -5,7 +5,7 @@ import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithRedirect,
+    signInWithPopup,
     signOut,
     updateProfile
 } from 'firebase/auth';
@@ -42,7 +42,9 @@ export function AuthProvider({ children }) {
 
     const loginWithGoogle = async () => {
         try {
-            await signInWithRedirect(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            console.log('[AuthContext] Google login successful:', result.user.email);
+            return result;
         } catch (error) {
             console.error('[AuthContext] Google login error:', {
                 code: error.code,
