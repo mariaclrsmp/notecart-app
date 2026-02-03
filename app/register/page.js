@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/lib/firebase/firebaseClient";
 
 export default function RegisterPage() {
     const [name, setName] = useState("");
@@ -19,6 +21,23 @@ export default function RegisterPage() {
 
     const { register, loginWithGoogle } = useAuth();
     const router = useRouter();
+
+    useEffect(() => {
+        const checkRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    console.log('[RegisterPage] Login com Google bem-sucedido:', result.user.email);
+                    router.push("/");
+                }
+            } catch (error) {
+                console.error('[RegisterPage] Erro no redirect result:', error);
+                setError(getErrorMessage(error.code));
+            }
+        };
+
+        checkRedirectResult();
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
