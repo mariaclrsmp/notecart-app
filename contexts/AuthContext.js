@@ -5,8 +5,7 @@ import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     signOut,
     updateProfile
 } from 'firebase/auth';
@@ -26,19 +25,6 @@ export function AuthProvider({ children }) {
             setLoading(false);
         });
 
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result) {
-                    console.log('[AuthContext] Google login successful via redirect:', result.user.email);
-                }
-            })
-            .catch((error) => {
-                console.error('[AuthContext] Redirect result error:', {
-                    code: error.code,
-                    message: error.message
-                });
-            });
-
         return () => unsubscribe();
     }, []);
 
@@ -56,7 +42,9 @@ export function AuthProvider({ children }) {
 
     const loginWithGoogle = async () => {
         try {
-            await signInWithRedirect(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            console.log('[AuthContext] Google login successful:', result.user.email);
+            return result;
         } catch (error) {
             console.error('[AuthContext] Google login error:', {
                 code: error.code,
