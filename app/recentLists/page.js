@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon } from "lucide-react";
+import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon, Image as ImageIcon, Info, Minus } from "lucide-react";
 import { listsService } from "@/lib/services/listsService";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -162,6 +162,41 @@ export default function RecentLists() {
         }
     };
 
+    const handleUpdateItemQuantity = (itemId, delta, isEditMode = false) => {
+        if (isEditMode) {
+            setEditedItems(editedItems.map(item => {
+                if (item.id === itemId) {
+                    const newQuantity = Math.max(0, (item.quantity || 1) + delta);
+                    return { ...item, quantity: newQuantity };
+                }
+                return item;
+            }));
+        }
+    };
+
+    const handleToggleItemChecked = async (itemId, isEditMode = false) => {
+        if (isEditMode) {
+            setEditedItems(editedItems.map(item => 
+                item.id === itemId ? { ...item, checked: !item.checked } : item
+            ));
+        } else {
+            const updatedItems = selectedList.items.map(item => 
+                item.id === itemId ? { ...item, checked: !item.checked } : item
+            );
+            try {
+                const token = await user.getIdToken();
+                await listsService.update(selectedList.id, {
+                    ...selectedList,
+                    items: updatedItems
+                }, token);
+                setSelectedList({ ...selectedList, items: updatedItems });
+                await loadLists();
+            } catch (error) {
+                console.error('Error toggling item:', error);
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
             <main className="p-4 sm:p-6 lg:p-8">
@@ -291,7 +326,7 @@ export default function RecentLists() {
                             <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
                             <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
                                     <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                         <div className="sm:flex sm:items-start">
                                             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
@@ -351,7 +386,6 @@ export default function RecentLists() {
                                                                     className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                                                                 />
 
-
                                                                 <button
                                                                     type="button"
                                                                     onClick={handleAddEditItem}
@@ -365,22 +399,64 @@ export default function RecentLists() {
                                                     {(isEditMode ? editedItems : selectedList.items)?.length > 0 ? (
                                                         <div className="max-h-96 overflow-y-auto space-y-2">
                                                             {(isEditMode ? editedItems : selectedList.items).map((item) => (
-                                                                <div key={item.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-950 px-3 py-2 rounded-lg">
-                                                                    <div className="flex items-center">
-                                                                        <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                                                                        <span className="text-sm text-gray-700 dark:text-gray-200">{item.name}</span>
+                                                                <div key={item.id} className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-950 px-3 py-3 rounded-lg transition-all ${item.checked ? 'opacity-60' : ''}`}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={item.checked || false}
+                                                                        onChange={() => handleToggleItemChecked(item.id, isEditMode)}
+                                                                        className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer"
+                                                                    />
+                                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                        <span className={`text-sm text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
                                                                     </div>
-
-
-                                                                    {isEditMode && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleRemoveEditItem(item.id)}
-                                                                            className="text-orange-500 hover:text-red-500 transition-colors duration-200"
-                                                                        >
-                                                                            <XIcon className="w-4 h-4" />
-                                                                        </button>
-                                                                    )}
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        {isEditMode ? (
+                                                                            <>
+                                                                                <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handleUpdateItemQuantity(item.id, -1, true)}
+                                                                                        className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                                                                    >
+                                                                                        <Minus className="w-4 h-4" />
+                                                                                    </button>
+                                                                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[24px] text-center">{item.quantity || 1}</span>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handleUpdateItemQuantity(item.id, 1, true)}
+                                                                                        className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                                                                    >
+                                                                                        <Plus className="w-4 h-4" />
+                                                                                    </button>
+                                                                                </div>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="text-green-500 hover:text-green-600 transition-colors duration-200 cursor-pointer"
+                                                                                    title="Adicionar imagem"
+                                                                                >
+                                                                                    <ImageIcon className="w-5 h-5" />
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleRemoveEditItem(item.id)}
+                                                                                    className="text-orange-500 hover:text-red-500 transition-colors duration-200 cursor-pointer"
+                                                                                >
+                                                                                    <XIcon className="w-5 h-5" />
+                                                                                </button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="text-xs font-medium text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">x{item.quantity || 1}</span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="text-green-500 hover:text-green-600 transition-colors duration-200"
+                                                                                    title="Ver imagem"
+                                                                                >
+                                                                                    <ImageIcon className="w-5 h-5" />
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>
