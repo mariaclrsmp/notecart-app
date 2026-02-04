@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon } from "lucide-react";
 import { listsService } from "@/lib/services/listsService";
@@ -9,6 +9,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function RecentLists() {
     const { user } = useAuth();
     const [lists, setLists] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("recent");
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedList, setSelectedList] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -31,6 +34,40 @@ export default function RecentLists() {
     useEffect(() => {
         loadLists();
     }, [loadLists]);
+
+    const displayedLists = useMemo(() => {
+        const getCreatedAtMs = (createdAt) => {
+            if (!createdAt) return 0;
+            if (typeof createdAt === "string" || createdAt instanceof Date) {
+                const ms = new Date(createdAt).getTime();
+                return Number.isNaN(ms) ? 0 : ms;
+            }
+            if (typeof createdAt === "object" && typeof createdAt.seconds === "number") {
+                return createdAt.seconds * 1000;
+            }
+            return 0;
+        };
+
+        const q = searchQuery.trim().toLowerCase();
+
+        const filtered = lists.filter((list) => {
+            const matchesQuery = q.length === 0 || (list.name || "").toLowerCase().includes(q);
+            const matchesType = typeFilter === "all" || list.type === typeFilter;
+            return matchesQuery && matchesType;
+        });
+
+        const sorted = [...filtered].sort((a, b) => {
+            if (sortBy === "alpha") {
+                return (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" });
+            }
+            if (sortBy === "items") {
+                return (b.items?.length || 0) - (a.items?.length || 0);
+            }
+            return getCreatedAtMs(b.createdAt) - getCreatedAtMs(a.createdAt);
+        });
+
+        return sorted;
+    }, [lists, searchQuery, typeFilter, sortBy]);
 
     const getListIcon = (type) => {
         switch (type) {
@@ -125,26 +162,66 @@ export default function RecentLists() {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        });
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
             <main className="p-4 sm:p-6 lg:p-8">
                 <div className="max-w-4xl mx-auto">
+
                     <div className="mb-4 sm:mb-6">
                         <Link href="/" className="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium mb-3 sm:mb-4">
                             <ChevronLeft className="w-5 h-5 mr-2" />
                             Voltar
                         </Link>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-2">Listas Recentes</h1>
-                        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Suas listas de compras criadas recentemente</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2 mb-4">Listas Recentes</h1>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 mb-6">
+                        <div className="grid gap-3 sm:grid-cols-3">
+
+                            <div className="sm:col-span-1">
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Buscar</label>
+                                <input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Digite o nome da lista"
+                                    className="w-full rounded-xl bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Filtro</label>
+                                <div className="relative">
+                                    <select
+                                        value={typeFilter}
+                                        onChange={(e) => setTypeFilter(e.target.value)}
+                                        className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer"
+                                    >
+
+                                        <option value="all">Todos os tipos</option>
+                                        <option value="grocery">Mercado</option>
+                                        <option value="healthcare">Saúde</option>
+                                        <option value="personalcare">Cuidados pessoais</option>
+                                        <option value="wishlist">Lista de desejos</option>
+                                    </select>
+                                    <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Ordenação</label>
+                                <div className="relative">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer"
+                                    >
+
+                                        <option value="recent">Mais recentes</option>
+                                        <option value="alpha">Alfabética</option>
+                                        <option value="items">Mais itens</option>
+                                    </select>
+                                    <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {lists.length === 0 ? (
@@ -158,83 +235,88 @@ export default function RecentLists() {
                         </div>
                     ) : (
                         <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                            {lists.map((list) => (
-                                <div key={list.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 sm:p-6">
-                                    <div className="flex items-start justify-between mb-2 sm:mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                                                {getListIcon(list.type)}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-800 text-base sm:text-lg">{list.name}</h3>
-                                                <p className="text-xs sm:text-sm text-gray-500">{getListTypeLabel(list.type)}</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => handleDeleteList(list.id)} className="text-gray-400 hover:text-red-500 transition-colors duration-200" title="Excluir lista">
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                    {list.items?.length > 0 && (
-                                        <div className="mb-3">
-                                            <ul className="space-y-2">
-                                                {list.items.slice(0, 5).map((item) => (
-                                                    <li key={item.id} className="bg-amber-50 p-2 rounded-lg text-sm sm:text-base text-gray-600 flex items-center">
-                                                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2"></span>
-                                                        {item.name}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            {list.items.length > 5 && (
-                                                <p className="text-xs text-gray-500 mt-2">+ {list.items.length - 5} itens</p>
-                                            )}
-                                        </div>
-                                    )}
-                                    <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-                                        Criada em: {formatDate(list.createdAt)}
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs sm:text-sm text-gray-600">
-                                            {list.items.length} {list.items.length === 1 ? "item" : "itens"}
-                                        </span>
-                                        <button onClick={() => handleViewDetails(list)} className="text-orange-500 hover:text-orange-600 font-medium text-xs sm:text-sm cursor-pointer">
-                                            Ver detalhes
-                                        </button>
-                                    </div>
+                            {displayedLists.length === 0 ? (
+                                <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+                                    <p className="text-sm text-gray-600">Nenhuma lista encontrada com esses critérios.</p>
                                 </div>
-                            ))}
+                            ) : displayedLists.map((list) => {
+                                const getIconColor = (type) => {
+                                    switch (type) {
+                                        case "grocery":
+                                            return "bg-blue-100 text-blue-600";
+                                        case "healthcare":
+                                            return "bg-red-100 text-red-600";
+                                        case "personalcare":
+                                            return "bg-purple-100 text-purple-600";
+                                        case "wishlist":
+                                            return "bg-pink-100 text-pink-600";
+                                        default:
+                                            return "bg-blue-100 text-blue-600";
+                                    }
+                                };
+
+                                return (
+                                    <div key={list.id} className="bg-gradient-to-br from-teal-700 to-teal-950 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 p-5 sm:p-6 text-white relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className={`w-12 h-12 ${getIconColor(list.type)} rounded-2xl flex items-center justify-center shadow-md`}>
+                                                        {getListIcon(list.type)}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-white text-lg">{list.name}</h3>
+                                                        <p className="text-sm text-teal-200">{list.items.length} {list.items.length === 1 ? "produto" : "produtos"}</p>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => handleDeleteList(list.id)} className="text-white/60 hover:text-white transition-colors duration-200" title="Excluir lista">
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={() => handleViewDetails(list)}
+                                                className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-colors duration-200 cursor-pointer backdrop-blur-sm"
+                                            >
+                                                Ver na loja
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
 
                     {showDetailsModal && selectedList && (
                         <div className="fixed inset-0 z-50 overflow-y-auto">
-                            <div className="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
+                            <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
                             <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                                <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                                    <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                         <div className="sm:flex sm:items-start">
                                             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
                                                 {getListIcon(isEditMode ? editedListType : selectedList.type)}
                                             </div>
                                             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+
                                                 {isEditMode ? (
                                                     <div className="space-y-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Nome da lista:</label>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Nome da lista:</label>
                                                             <input
                                                                 type="text"
                                                                 value={editedListName}
                                                                 onChange={(e) => setEditedListName(e.target.value)}
-                                                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de lista:</label>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Tipo de lista:</label>
                                                             <div className="relative">
                                                                 <select
                                                                     value={editedListType}
                                                                     onChange={(e) => setEditedListType(e.target.value)}
-                                                                    className="w-full rounded-lg bg-transparent text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
+                                                                    className="w-full rounded-lg bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
                                                                 >
                                                                     <option value="grocery">Mercado</option>
                                                                     <option value="healthcare">Saúde</option>
@@ -247,8 +329,8 @@ export default function RecentLists() {
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{selectedList.name}</h3>
-                                                        <p className="text-sm text-gray-500 mb-4">{getListTypeLabel(selectedList.type)}</p>
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{selectedList.name}</h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{getListTypeLabel(selectedList.type)}</p>
                                                     </>
                                                 )}
                                                 <button className="absolute right-6 top-3 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }} aria-label="Fechar">
@@ -256,7 +338,7 @@ export default function RecentLists() {
                                                 </button>
 
                                                 <div className="mt-4">
-                                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Itens da lista ({isEditMode ? editedItems.length : selectedList.items?.length || 0})</h4>
+                                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Itens da lista ({isEditMode ? editedItems.length : selectedList.items?.length || 0})</h4>
                                                     {isEditMode && (
                                                         <div className="mb-3">
                                                             <div className="flex gap-2">
@@ -266,8 +348,10 @@ export default function RecentLists() {
                                                                     onChange={(e) => setEditCurrentItem(e.target.value)}
                                                                     onKeyPress={handleEditKeyPress}
                                                                     placeholder="Digite um item"
-                                                                    className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                                                    className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                                                                 />
+
+
                                                                 <button
                                                                     type="button"
                                                                     onClick={handleAddEditItem}
@@ -281,11 +365,13 @@ export default function RecentLists() {
                                                     {(isEditMode ? editedItems : selectedList.items)?.length > 0 ? (
                                                         <div className="max-h-96 overflow-y-auto space-y-2">
                                                             {(isEditMode ? editedItems : selectedList.items).map((item) => (
-                                                                <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                                                                <div key={item.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-950 px-3 py-2 rounded-lg">
                                                                     <div className="flex items-center">
                                                                         <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                                                                        <span className="text-sm text-gray-700">{item.name}</span>
+                                                                        <span className="text-sm text-gray-700 dark:text-gray-200">{item.name}</span>
                                                                     </div>
+
+
                                                                     {isEditMode && (
                                                                         <button
                                                                             type="button"
@@ -299,13 +385,13 @@ export default function RecentLists() {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <p className="text-sm text-gray-500 text-center py-4">Nenhum item adicionado ainda</p>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhum item adicionado ainda</p>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                    <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                         {isEditMode ? (
                                             <>
                                                 <button
@@ -318,7 +404,7 @@ export default function RecentLists() {
                                                 <button
                                                     type="button"
                                                     onClick={handleCancelEdit}
-                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer"
+                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer"
                                                 >
                                                     Cancelar
                                                 </button>
@@ -328,7 +414,7 @@ export default function RecentLists() {
                                                 <button
                                                     type="button"
                                                     onClick={handleEditMode}
-                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
+                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
                                                 >
                                                     <Edit2 className="w-4 h-4" />
                                                     Editar
@@ -340,6 +426,7 @@ export default function RecentLists() {
                             </div>
                         </div>
                     )}
+
                 </div>
             </main>
         </div>

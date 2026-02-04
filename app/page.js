@@ -2,18 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDownIcon, XIcon, ShoppingCart, Heart, Pill, Sparkles, Trash2, ListPlus, Plus, Edit2 } from "lucide-react";
+import { ChevronDownIcon, XIcon, ShoppingCart, Heart, Pill, Sparkles, Trash2, ListPlus, Plus, Edit2, Minus, Info } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { listsService } from "@/lib/services/listsService";
 import { useAuth } from "@/contexts/AuthContext";
+import ItemDetailsModal from "@/components/ItemDetailsModal";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Home() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [listType, setListType] = useState("grocery");
   const [listName, setListName] = useState("");
   const [recentLists, setRecentLists] = useState([]);
-  const [allLists, setAllLists] = useState([]);
   const [items, setItems] = useState([]);
   const [currentItem, setCurrentItem] = useState("");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -23,14 +26,15 @@ export default function Home() {
   const [editedListType, setEditedListType] = useState("grocery");
   const [editedItems, setEditedItems] = useState([]);
   const [editCurrentItem, setEditCurrentItem] = useState("");
+  const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const loadLists = useCallback(async () => {
     if (!user) return;
     try {
       const token = await user.getIdToken();
       const lists = await listsService.getAll(token);
-      setRecentLists(lists.slice(0, 3));
-      setAllLists(lists.slice(3));
+      setRecentLists(lists);
     } catch (error) {
       console.error('Error loading lists:', error);
     }
@@ -39,6 +43,13 @@ export default function Home() {
   useEffect(() => {
     loadLists();
   }, [loadLists]);
+
+  useEffect(() => {
+    if (searchParams.get('openModal') === 'true') {
+      setShowModal(true);
+      router.replace('/');
+    }
+  }, [searchParams, router]);
 
   const handleOpenModal = () => {
     setShowModal(true);
@@ -54,7 +65,7 @@ export default function Home() {
 
   const handleAddItem = () => {
     if (currentItem.trim()) {
-      setItems([...items, { id: Date.now(), name: currentItem.trim(), checked: false }]);
+      setItems([...items, { id: Date.now(), name: currentItem.trim(), quantity: 1, details: "", photoUrl: "" }]);
       setCurrentItem("");
     }
   };
@@ -131,7 +142,7 @@ export default function Home() {
 
   const handleAddEditItem = () => {
     if (editCurrentItem.trim()) {
-      setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim() }]);
+      setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim(), quantity: 1, details: "", photoUrl: "" }]);
       setEditCurrentItem("");
     }
   };
@@ -158,263 +169,237 @@ export default function Home() {
     }
   };
 
+  const handleUpdateItemQuantity = (itemId, delta, isEditMode = false) => {
+    if (isEditMode) {
+      setEditedItems(editedItems.map(item => {
+        if (item.id === itemId) {
+          const newQuantity = Math.max(1, (item.quantity || 1) + delta);
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      }));
+    } else {
+      setItems(items.map(item => {
+        if (item.id === itemId) {
+          const newQuantity = Math.max(1, (item.quantity || 1) + delta);
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      }));
+    }
+  };
+
+  const handleOpenItemDetails = (item, isEditMode = false) => {
+    setSelectedItem({ ...item, isEditMode });
+    setShowItemDetailsModal(true);
+  };
+
+  const handleSaveItemDetails = (updatedItem) => {
+    if (updatedItem.isEditMode) {
+      setEditedItems(editedItems.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      ));
+    } else {
+      setItems(items.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      ));
+    }
+  };
+
+  const handleDeleteItemFromList = async (listId, itemId) => {
+    if (!confirm("Deseja realmente excluir este item?")) return;
+    try {
+      const token = await user.getIdToken();
+      const list = recentLists.find(l => l.id === listId);
+      if (!list) return;
+      
+      const updatedItems = list.items.filter(item => item.id !== itemId);
+      await listsService.update(listId, {
+        name: list.name,
+        type: list.type,
+        items: updatedItems
+      }, token);
+      await loadLists();
+      
+      if (selectedList && selectedList.id === listId) {
+        setSelectedList({ ...selectedList, items: updatedItems });
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Erro ao excluir item');
+    }
+  };
+
+  const featuredList = recentLists[0] || null;
+  const curatedLists = recentLists.slice(1, 3);
+  const totalListsCount = recentLists.length;
+  const totalItemsCount = recentLists.reduce((sum, list) => sum + (list.items?.length || 0), 0);
+
+  const getDaysSince = (createdAt) => {
+    if (!createdAt) return null;
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) return null;
+    const diffMs = Date.now() - date.getTime();
+    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <main className="p-6 lg:p-8">
         <div className="max-w-4xl mx-auto">
 
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Home</h1>
+          </div>
+
           {recentLists.length === 0 ? (
-            <div className="text-center py-10 lg:py-10">
-              <div className="mb-4 flex justify-center">
-                <div className="relative">
-                  <Image src="/cart.png" alt="Shopping Cart" width={150} height={150} />
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
+              <div className="flex items-center gap-4">
+                <Image src="/cart.png" alt="Shopping Cart" width={72} height={72} />
+                <div>
+                  <p className="text-gray-900 dark:text-gray-100 font-semibold">Você ainda não tem listas</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Use o botão + para criar sua primeira lista</p>
                 </div>
               </div>
-
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
-                Descubra Produtos
-              </h1>
-
-              <p className="text-gray-600 text-lg lg:text-xl mb-8 max-w-md mx-auto">
-                Compartilhe sua lista de compras com seus amigos e familiares.
-              </p>
-              <button onClick={handleOpenModal} className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-full text-lg transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer">
-                Criar Lista
-              </button>
             </div>
           ) : (
-            <div>
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Minhas Listas</h1>
-                  <p className="text-gray-600 mt-1">Gerencie suas listas de compras</p>
+            <div className="space-y-6">
+              {featuredList && (
+                <div className="bg-gradient-to-br from-teal-700 to-teal-950 rounded-2xl shadow-lg p-5 sm:p-6 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative z-10">
+                    <p className="text-xs uppercase tracking-wider text-teal-100/80">Última lista criada</p>
+                    <div className="flex items-start justify-between gap-4 mt-2">
+                      <div>
+                        <h2 className="text-lg sm:text-xl font-bold">{featuredList.name}</h2>
+                        <p className="text-sm text-teal-200 mt-1">
+                          Você tem {(featuredList.items?.length || 0)} {(featuredList.items?.length || 0) === 1 ? "item" : "itens"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteListWrapper(featuredList.id)}
+                        className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+                        title="Excluir lista"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleViewDetails(featuredList)}
+                      className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-colors duration-200 cursor-pointer backdrop-blur-sm"
+                    >
+                      Abrir lista
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={handleOpenModal}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer w-12 h-12 flex items-center justify-center sm:w-auto sm:h-auto sm:px-6 sm:py-3"
-                  aria-label="Nova Lista"
-                  title="Nova Lista"
-                >
-                  <span className="sm:hidden">
-                    <ListPlus className="w-6 h-6" />
-                  </span>
-                  <span className="hidden sm:inline">+ Nova Lista</span>
-                </button>
+              )}
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300">
+                  <p className="text-xs text-gray-500">Listas ativas</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1 dark:text-slate-100">{totalListsCount}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100">
+                  <p className="text-xs text-gray-500">Itens no total</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1 dark:text-slate-100">{totalItemsCount}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 col-span-2 sm:col-span-1 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100">
+                  <p className="text-xs text-gray-500">Última atualização</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1 dark:text-slate-100">
+                    {featuredList?.createdAt && getDaysSince(featuredList.createdAt) !== null
+                      ? `${getDaysSince(featuredList.createdAt)} dias`
+                      : "Hoje"}
+                  </p>
+                </div>
               </div>
 
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-                {recentLists.map((list) => {
-                  const getListIcon = (type) => {
-                    switch (type) {
-                      case "grocery":
-                        return <ShoppingCart className="w-6 h-6" />;
-                      case "healthcare":
-                        return <Pill className="w-6 h-6" />;
-                      case "personalcare":
-                        return <Sparkles className="w-6 h-6" />;
-                      case "wishlist":
-                        return <Heart className="w-6 h-6" />;
-                      default:
-                        return <ShoppingCart className="w-6 h-6" />;
-                    }
-                  };
-
-                  const getListTypeLabel = (type) => {
-                    const labels = {
-                      grocery: "Mercado",
-                      healthcare: "Saúde",
-                      personalcare: "Cuidados pessoais",
-                      wishlist: "Lista de desejos"
-                    };
-                    return labels[type] || type;
-                  };
-
-
-
-                  return (
-                    <div key={list.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 sm:p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                            {getListIcon(list.type)}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-800 text-lg/5 py-2">{list.name}</h3>
-                            <p className="text-sm text-gray-500">{getListTypeLabel(list.type)}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteListWrapper(list.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors duration-200 cursor-pointer"
-                          title="Excluir lista"
-                        >
-                          <Trash2 className="w-5 h-5 cursor-pointer" />
-                        </button>
-                      </div>
-                      {list.items.length > 0 && (
-                        <div className="mb-3">
-                          <ul className="space-y-2">
-                            {list.items.slice(0, 5).map((item) => (
-                              <li key={item.id} className="bg-amber-50 p-2 rounded-lg text-md text-gray-600 flex items-center">
-                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2"></span>
-                                {item.name}
-                              </li>
-                            ))}
-                          </ul>
-                          {list.items.length > 5 && (
-                            <p className="text-xs text-gray-500 mt-2">+ {list.items.length - 5} itens</p>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">
-                          {list.items.length} {list.items.length === 1 ? "item" : "itens"}
-                        </span>
-                        <button
-                          onClick={() => handleViewDetails(list)}
-                          className="text-orange-500 hover:text-orange-600 font-medium text-sm cursor-pointer"
-                        >
-                          Ver detalhes
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300">
+                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">Ações rápidas</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                  <button
+                    type="button"
+                    onClick={handleOpenModal}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors duration-200 px-4 py-3 cursor-pointer"
+                  >
+                    Criar nova lista
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenModal}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-xl transition-colors duration-200 px-4 py-3 border border-gray-200 cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100 dark:hover:bg-gray-800"
+                  >
+                    Adicionar item rápido
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenModal}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-xl transition-colors duration-200 px-4 py-3 border border-gray-200 cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100 dark:hover:bg-gray-800"
+                  >
+                    Criar por modelo
+                  </button>
+                </div>
               </div>
 
-              <div className="text-center">
-                <Link href="/recentLists" className="text-orange-500 hover:text-orange-600 font-medium">
-                  Ver todas as listas →
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {allLists.length > 0 && (
-            <div className="mt-12">
-              <div className="mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Listas Gerais Recentes</h2>
-                <p className="text-gray-600 mt-1">Outras listas criadas recentemente</p>
-              </div>
-
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {allLists.map((list) => {
-                  const getListIcon = (type) => {
-                    switch (type) {
-                      case "grocery":
-                        return <ShoppingCart className="w-6 h-6" />;
-                      case "healthcare":
-                        return <Pill className="w-6 h-6" />;
-                      case "personalcare":
-                        return <Sparkles className="w-6 h-6" />;
-                      case "wishlist":
-                        return <Heart className="w-6 h-6" />;
-                      default:
-                        return <ShoppingCart className="w-6 h-6" />;
-                    }
-                  };
-
-                  const getListTypeLabel = (type) => {
-                    const labels = {
-                      grocery: "Mercado",
-                      healthcare: "Saúde",
-                      personalcare: "Cuidados pessoais",
-                      wishlist: "Lista de desejos"
-                    };
-                    return labels[type] || type;
-                  };
-
-
-
-                  return (
-                    <div key={list.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 sm:p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                            {getListIcon(list.type)}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-800 text-lg/5 py-2">{list.name}</h3>
-                            <p className="text-sm text-gray-500">{getListTypeLabel(list.type)}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteListWrapper(list.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors duration-200 cursor-pointer"
-                          title="Excluir lista"
-                        >
-                          <Trash2 className="w-5 h-5 cursor-pointer" />
-                        </button>
-                      </div>
-                      {list.items?.length > 0 && (
-                        <div className="mb-3">
-                          <ul className="space-y-2">
-                            {list.items.slice(0, 5).map((item) => (
-                              <li key={item.id} className="bg-amber-50 p-2 rounded-lg text-md text-gray-600 flex items-center">
-                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2"></span>
-                                {item.name}
-                              </li>
-                            ))}
-                          </ul>
-                          {list.items.length > 5 && (
-                            <p className="text-xs text-gray-500 mt-2">+ {list.items.length - 5} itens</p>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">
-                          {list.items?.length || 0} {list.items?.length === 1 ? "item" : "itens"}
-                        </span>
-                        <button
-                          onClick={() => handleViewDetails(list)}
-                          className="text-orange-500 hover:text-orange-600 font-medium text-sm cursor-pointer"
-                        >
-                          Ver detalhes
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {curatedLists.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Sugestões</h3>
+                    <Link href="/recentLists" className="text-sm text-orange-600 hover:text-orange-700 font-medium">
+                      Ver mais
+                    </Link>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {curatedLists.map((list) => (
+                      <button
+                        key={list.id}
+                        type="button"
+                        onClick={() => handleViewDetails(list)}
+                        className="text-left bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100"
+                      >
+                        <p className="text-sm font-semibold text-gray-900 truncate dark:text-slate-100">{list.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">{(list.items?.length || 0)} {(list.items?.length || 0) === 1 ? "item" : "itens"}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {showModal && (
             <div className="fixed inset-0 z-50 overflow-y-auto">
-              <div className="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={handleCloseModal}></div>
+              <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={handleCloseModal}></div>
 
               <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
-                      <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-yellow-300 sm:mx-0 sm:size-10">
-                        <svg className="w-6 h-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                          <path d="M0 72C0 58.7 10.7 48 24 48L69.3 48C96.4 48 119.6 67.4 124.4 94L124.8 96L537.5 96C557.5 96 572.6 114.2 568.9 133.9L537.8 299.8C532.1 330.1 505.7 352 474.9 352L171.3 352L176.4 380.3C178.5 391.7 188.4 400 200 400L456 400C469.3 400 480 410.7 480 424C480 437.3 469.3 448 456 448L200.1 448C165.3 448 135.5 423.1 129.3 388.9L77.2 102.6C76.5 98.8 73.2 96 69.3 96L24 96C10.7 96 0 85.3 0 72zM160 528C160 501.5 181.5 480 208 480C234.5 480 256 501.5 256 528C256 554.5 234.5 576 208 576C181.5 576 160 554.5 160 528zM384 528C384 501.5 405.5 480 432 480C458.5 480 480 501.5 480 528C480 554.5 458.5 576 432 576C405.5 576 384 554.5 384 528zM336 142.4C322.7 142.4 312 153.1 312 166.4L312 200L278.4 200C265.1 200 254.4 210.7 254.4 224C254.4 237.3 265.1 248 278.4 248L312 248L312 281.6C312 294.9 322.7 305.6 336 305.6C349.3 305.6 360 294.9 360 281.6L360 248L393.6 248C406.9 248 417.6 237.3 417.6 224C417.6 210.7 406.9 200 393.6 200L360 200L360 166.4C360 153.1 349.3 142.4 336 142.4z" />
-                        </svg>
+                      <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
+                        <ListPlus className="w-6 h-6 text-orange-600" />
                       </div>
                       <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 id="dialog-title" className="text-base font-semibold text-gray-900">Criar uma nova lista</h3>
+                        <h3 id="dialog-title" className="text-base font-semibold text-gray-900 dark:text-gray-100">Criar uma nova lista</h3>
                         <button className="absolute right-6 top-3 h-2 w-2 text-orange-500 hover:text-orange-600 cursor-pointer" onClick={handleCloseModal}>
                           <XIcon />
                         </button>
                         <div className="mt-4 space-y-4">
                           <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Nome da lista:</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Nome da lista:</label>
                             <input
                               type="text"
                               value={listName}
                               onChange={(e) => setListName(e.target.value)}
                               placeholder="Ex: Compras do mês"
-                              className="w-full rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                              className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                             />
                           </div>
                           <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de lista:</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Tipo de lista:</label>
                             <div className="relative">
                               <select
                                 value={listType}
                                 onChange={(e) => setListType(e.target.value)}
-                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded pl-3 pr-8 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
+                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 rounded pl-3 pr-8 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
                               >
                                 <option value="grocery">Mercado</option>
                                 <option value="healthcare">Saúde</option>
@@ -426,7 +411,7 @@ export default function Home() {
                           </div>
 
                           <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Adicionar itens:</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Adicionar itens:</label>
                             <div className="flex gap-2">
                               <input
                                 type="text"
@@ -434,7 +419,7 @@ export default function Home() {
                                 onChange={(e) => setCurrentItem(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 placeholder="Digite um item"
-                                className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                               />
                               <button
                                 type="button"
@@ -448,15 +433,45 @@ export default function Home() {
                             {items.length > 0 && (
                               <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
                                 {items.map((item) => (
-                                  <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
-                                    <span className="text-sm text-gray-700">{item.name}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveItem(item.id)}
-                                      className="text-orange-500 hover:text-red-500 transition-colors duration-200"
-                                    >
-                                      <XIcon className="w-4 h-4" />
-                                    </button>
+                                  <div key={item.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-950 px-3 py-2 rounded-lg">
+                                    <div className="flex items-center gap-2 flex-1">
+                                      <span className="text-sm text-gray-700 dark:text-gray-200">{item.name}</span>
+                                      {item.details && <Info className="w-3 h-3 text-blue-500" />}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateItemQuantity(item.id, -1, false)}
+                                          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                        >
+                                          <Minus className="w-3 h-3" />
+                                        </button>
+                                        <span className="text-xs font-medium text-gray-700 min-w-[20px] text-center">{item.quantity || 1}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateItemQuantity(item.id, 1, false)}
+                                          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenItemDetails(item, false)}
+                                        className="text-blue-500 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                                        title="Detalhes"
+                                      >
+                                        <Info className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveItem(item.id)}
+                                        className="text-orange-500 hover:text-red-500 transition-colors duration-200 cursor-pointer"
+                                      >
+                                        <XIcon className="w-4 h-4" />
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -466,9 +481,9 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                     <button type="button" onClick={handleSaveList} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer">Salvar</button>
-                    <button type="button" onClick={handleCloseModal} className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer items-center">Cancelar</button>
+                    <button type="button" onClick={handleCloseModal} className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer items-center">Cancelar</button>
                   </div>
                 </div>
               </div>
@@ -477,11 +492,11 @@ export default function Home() {
 
           {showDetailsModal && selectedList && (
             <div className="fixed inset-0 z-50 overflow-y-auto">
-              <div className="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
+              <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
               <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
                       <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
                         {(() => {
@@ -531,8 +546,8 @@ export default function Home() {
                           </div>
                         ) : (
                           <>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{selectedList.name}</h3>
-                            <p className="text-sm text-gray-500 mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{selectedList.name}</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                               {(() => {
                                 const labels = {
                                   grocery: "Mercado",
@@ -553,58 +568,89 @@ export default function Home() {
                         </button>
 
                         <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">
                             Itens da lista ({isEditMode ? editedItems.length : selectedList.items.length})
                           </h4>
-                          {isEditMode && (
-                            <div className="mb-3">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={editCurrentItem}
-                                  onChange={(e) => setEditCurrentItem(e.target.value)}
-                                  onKeyPress={handleEditKeyPress}
-                                  placeholder="Digite um item"
-                                  className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={handleAddEditItem}
-                                  className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
                           {(isEditMode ? editedItems : selectedList.items).length > 0 ? (
                             <div className="max-h-96 overflow-y-auto space-y-2">
                               {(isEditMode ? editedItems : selectedList.items).map((item) => (
-                                <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
-                                  <div className="flex items-center">
-                                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                                    <span className="text-sm text-gray-700">{item.name}</span>
+                                <div key={item.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-950 px-3 py-2 rounded-lg">
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">{item.name}</span>
+                                    {item.details && <Info className="w-3 h-3 text-blue-500" />}
                                   </div>
-                                  {isEditMode && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveEditItem(item.id)}
-                                      className="text-orange-500 hover:text-red-500 transition-colors duration-200"
-                                    >
-                                      <XIcon className="w-4 h-4" />
-                                    </button>
-                                  )}
+                                  <div className="flex items-center gap-2">
+                                    {isEditMode ? (
+                                      <>
+                                        <div className="flex items-center gap-1 bg-white rounded-lg px-2 py-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleUpdateItemQuantity(item.id, -1, true)}
+                                            className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                          >
+                                            <Minus className="w-3 h-3" />
+                                          </button>
+                                          <span className="text-xs font-medium text-gray-700 min-w-[20px] text-center">{item.quantity || 1}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleUpdateItemQuantity(item.id, 1, true)}
+                                            className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                                          >
+                                            <Plus className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenItemDetails(item, true)}
+                                          className="text-blue-500 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                                          title="Detalhes"
+                                        >
+                                          <Info className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveEditItem(item.id)}
+                                          className="text-orange-500 hover:text-red-500 transition-colors duration-200 cursor-pointer"
+                                        >
+                                          <XIcon className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">x{item.quantity || 1}</span>
+                                        {item.details && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenItemDetails(item, false)}
+                                            className="text-blue-500 hover:text-blue-600 transition-colors duration-200"
+                                            title="Ver detalhes"
+                                          >
+                                            <Info className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteItemFromList(selectedList.id, item.id)}
+                                          className="text-orange-500 hover:text-red-500 transition-colors duration-200"
+                                          title="Excluir item"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500 text-center py-4">Nenhum item adicionado ainda</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhum item adicionado ainda</p>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                     {isEditMode ? (
                       <>
                         <button
@@ -617,7 +663,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer"
+                          className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer"
                         >
                           Cancelar
                         </button>
@@ -627,7 +673,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleEditMode}
-                          className="mt-3 inline-flex w-full justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
+                          className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
                         >
                           <Edit2 className="w-4 h-4" />
                           Editar
@@ -638,6 +684,14 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          )}
+
+          {showItemDetailsModal && selectedItem && (
+            <ItemDetailsModal
+              item={selectedItem}
+              onClose={() => setShowItemDetailsModal(false)}
+              onSave={handleSaveItemDetails}
+            />
           )}
         </div>
       </main>

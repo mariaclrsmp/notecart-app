@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Home, List, Share2, Settings, X, LogOut } from "lucide-react";
+import { Menu, Home, List, Share2, User, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const { user, logout, loading } = useAuth();
@@ -27,14 +26,6 @@ export default function Sidebar() {
         localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
     };
 
-    const toggleMobileSidebar = () => {
-        setIsMobileOpen(!isMobileOpen);
-    };
-
-    const closeMobileSidebar = () => {
-        setIsMobileOpen(false);
-    };
-
     const handleLogout = async () => {
         try {
             await logout();
@@ -47,10 +38,9 @@ export default function Sidebar() {
     const isActive = (path) => pathname === path;
 
     const menuItems = [
-        { path: "/", label: "Início", icon: Home },
-        { path: "/recentLists", label: "Todas as Listas", icon: List },
-        { path: "/sharedLists", label: "Listas Compartilhadas", icon: Share2 },
-        { path: "/settings", label: "Configurações", icon: Settings }
+        { path: "/", label: "Início", mobileLabel: "Início", icon: Home },
+        { path: "/recentLists", label: "Todas as Listas", mobileLabel: "Listas", icon: List },
+        { path: "/sharedLists", label: "Listas Compartilhadas", mobileLabel: "Compartilhadas", icon: Share2 },
     ];
 
     const getUserInitial = () => {
@@ -77,26 +67,50 @@ export default function Sidebar() {
 
     return (
         <>
-            <button
-                onClick={toggleMobileSidebar}
-                className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-colors duration-200"
-                aria-label="Menu"
-            >
-                <Menu className="w-6 h-6" />
-            </button>
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-50 shadow-lg">
+                <div className="grid grid-cols-4 h-16">
+                    {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        const isProfile = item.path === "/profile";
+                        return (
+                            <Link
+                                key={item.path}
+                                href={item.path}
+                                className={`flex flex-col items-center justify-center gap-1 transition-colors duration-200 ${
+                                    isActive(item.path)
+                                        ? 'text-orange-600'
+                                        : 'text-gray-500 dark:text-gray-300'
+                                }`}
+                            >
+                                {isProfile ? (
+                                    user?.photoURL ? (
+                                        <Image
+                                            src={user.photoURL}
+                                            alt="Foto do usuário"
+                                            width={20}
+                                            height={20}
+                                            className="rounded-full"
+                                        />
+                                    ) : (
+                                        <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-white text-[10px] font-semibold">
+                                            {getUserInitial()}
+                                        </div>
+                                    )
+                                ) : (
+                                    <Icon className="w-5 h-5" />
+                                )}
+                                <span className="text-[10px] font-medium">{item.mobileLabel}</span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </nav>
 
-            {isMobileOpen && (
-                <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-40"
-                    onClick={closeMobileSidebar}
-                ></div>
-            )}
-
-            <aside className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 z-40 ${isCollapsed ? 'w-20' : 'w-64'
-                } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-                }`}>
+            <aside className={`hidden lg:block fixed left-0 top-0 h-screen bg-white dark:bg-gray-950 shadow-lg transition-all duration-300 z-40 ${
+                isCollapsed ? 'w-20' : 'w-64'
+            }`}>
                 <div className="flex flex-col h-full">
-                    <div className="p-6 flex items-center justify-between border-b border-gray-100">
+                    <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
                         <div className="flex items-center space-x-3">
                             <button
                                 onClick={toggleSidebar}
@@ -107,18 +121,11 @@ export default function Sidebar() {
                             </button>
                             {!isCollapsed && (
                                 <div className="flex items-center space-x-2">
-                                    <h2 className="text-xl font-bold text-gray-800 whitespace-nowrap">NoteCart</h2>
+                                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">NoteCart</h2>
                                     <Image src="/cart.png" alt="NoteCart" width={42} height={42} />
                                 </div>
                             )}
                         </div>
-                        <button
-                            onClick={closeMobileSidebar}
-                            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                            aria-label="Fechar menu"
-                        >
-                            <X className="w-5 h-5 text-gray-600" />
-                        </button>
                     </div>
 
                     <nav className="flex-1 p-4 space-y-2">
@@ -128,11 +135,10 @@ export default function Sidebar() {
                                 <Link
                                     key={item.path}
                                     href={item.path}
-                                    onClick={closeMobileSidebar}
                                     className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} px-4 py-3 rounded-lg transition-all duration-200 ${isActive(item.path)
-                                        ? 'bg-orange-100 text-orange-600 font-medium'
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                        }`}
+                                        ? 'bg-gray-200/70 dark:bg-gray-900 text-orange-600 font-medium'
+                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900'
+                                    }`}
                                     title={isCollapsed ? item.label : ''}
                                 >
                                     <Icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
@@ -142,9 +148,14 @@ export default function Sidebar() {
                         })}
                     </nav>
 
-                    <div className="p-4 border-t border-gray-100 cursor-pointer" onClick={toggleSidebar}>
+                    <div className="p-4 border-t border-gray-100 dark:border-gray-800">
                         <div className={`flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between'}`}>
-                            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3 flex-1 min-w-0'}`}>
+                            <button
+                                type="button"
+                                onClick={() => router.push("/profile")}
+                                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3 flex-1 min-w-0'} cursor-pointer text-left`}
+                                title="Perfil"
+                            >
                                 {user?.photoURL ? (
                                     <Image
                                         src={user.photoURL}
@@ -160,14 +171,14 @@ export default function Sidebar() {
                                 )}
                                 {!isCollapsed && (
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-800 truncate">{getUserDisplayName()}</p>
-                                        <p className="text-xs text-gray-500 truncate">{getUserEmail()}</p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{getUserDisplayName()}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getUserEmail()}</p>
                                     </div>
                                 )}
-                            </div>
+                            </button>
                             <button
                                 onClick={handleLogout}
-                                className={`p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200 ${isCollapsed ? '' : 'shrink-0'}`}
+                                className={`p-2 text-gray-500 dark:text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors duration-200 ${isCollapsed ? '' : 'shrink-0'}`}
                                 title="Sair"
                             >
                                 <LogOut className="w-5 h-5" />

@@ -37,7 +37,7 @@ export default function MainWrapper({ children }) {
     }, [isCollapsed]);
 
     return (
-        <div className={`transition-all duration-300 lg:${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className={`transition-all duration-300 pb-20 lg:pb-0 lg:${isCollapsed ? 'ml-20' : 'ml-64'}`}>
             {children}
         </div>
     );

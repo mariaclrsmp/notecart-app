@@ -2,3 +2,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  * {
+    font-family: var(--font-lexend), system-ui, -apple-system, sans-serif;
+  }
+  
+  body {
+    font-family: var(--font-lexend), system-ui, -apple-system, sans-serif;
+  }
+  
+  input,
+  textarea,
+  select,
+  button {
+    font-family: var(--font-lexend), system-ui, -apple-system, sans-serif;
+  }
+}

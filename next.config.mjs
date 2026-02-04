@@ -8,6 +8,8 @@ const nextConfig = {
                 pathname: '**',
             },
         ],
+        dangerouslyAllowSVG: true,
+        unoptimized: true,
     },
 };
 

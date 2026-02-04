@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "@/components/Sidebar";
 import MainWrapper from "@/components/MainWrapper";
+import { Plus } from "lucide-react";
 
 const publicRoutes = ["/login", "/register"];
 
@@ -44,10 +45,23 @@ export default function AuthenticatedLayout({ children }) {
         return null;
     }
 
+    const handleCreateList = () => {
+        router.push("/?openModal=true");
+    };
+
     return (
         <>
             <Sidebar />
             <MainWrapper>{children}</MainWrapper>
+            
+            <button
+                onClick={handleCreateList}
+                className="fixed bottom-20 left-1/2 -translate-x-1/2 lg:bottom-8 lg:right-8 lg:left-auto lg:translate-x-0 w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center"
+                aria-label="Criar nova lista"
+                title="Criar nova lista"
+            >
+                <Plus className="w-6 h-6" />
+            </button>
         </>
     );
 }

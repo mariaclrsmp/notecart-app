@@ -69,15 +69,15 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 p-4">
             <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 sm:p-8 border border-transparent dark:border-gray-800">
                     <div className="flex flex-col items-center mb-8">
                         <div className="flex items-center gap-2 mb-2">
                             <Image src="/cart.png" alt="NoteCart" width={48} height={48} />
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">NoteCart</h1>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">NoteCart</h1>
                         </div>
-                        <p className="text-gray-500 text-sm sm:text-base">Entre na sua conta</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">Entre na sua conta</p>
                     </div>
 
                     {error && (
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Email
                             </label>
                             <div className="relative">
@@ -101,13 +101,13 @@ export default function LoginPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="seu@email.com"
                                     required
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-gray-800 placeholder-gray-400"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-950"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Senha
                             </label>
                             <div className="relative">
@@ -119,12 +119,12 @@ export default function LoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-gray-800 placeholder-gray-400"
+                                    className="w-full pl-10 pr-12 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-950"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                                 >
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -142,17 +142,17 @@ export default function LoginPage() {
 
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                            <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white text-gray-500">ou continue com</span>
+                            <span className="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">ou continue com</span>
                         </div>
                     </div>
 
                     <button
                         onClick={handleGoogleLogin}
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                             <path
@@ -172,10 +172,10 @@ export default function LoginPage() {
                                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                             />
                         </svg>
-                        <span className="text-gray-700 font-medium">Google</span>
+                        <span className="text-gray-700 dark:text-gray-200 font-medium">Google</span>
                     </button>
 
-                    <p className="text-center text-gray-600 text-sm mt-6">
+                    <p className="text-center text-gray-600 dark:text-gray-300 text-sm mt-6">
                         Não tem uma conta?{" "}
                         <Link href="/register" className="text-orange-500 hover:text-orange-600 font-medium">
                             Cadastre-se
