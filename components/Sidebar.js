@@ -43,6 +43,13 @@ export default function Sidebar() {
         { path: "/sharedLists", label: "Listas Compartilhadas", mobileLabel: "Compartilhadas", icon: Share2 },
     ];
 
+    const mobileMenuItems = [
+        { path: "/", label: "Início", icon: Home },
+        { path: "/recentLists", label: "Listas", icon: List },
+        { path: "/sharedLists", label: "Compartilhadas", icon: Share2 },
+        { path: "/profile", label: "Perfil", icon: User },
+    ];
+
     const getUserInitial = () => {
         if (user?.displayName) {
             return user.displayName.charAt(0).toUpperCase();
@@ -69,7 +76,7 @@ export default function Sidebar() {
         <>
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-50 shadow-lg">
                 <div className="grid grid-cols-4 h-16">
-                    {menuItems.map((item) => {
+                    {mobileMenuItems.map((item) => {
                         const Icon = item.icon;
                         const isProfile = item.path === "/profile";
                         return (
@@ -79,7 +86,7 @@ export default function Sidebar() {
                                 className={`flex flex-col items-center justify-center gap-1 transition-colors duration-200 ${
                                     isActive(item.path)
                                         ? 'text-orange-600'
-                                        : 'text-gray-500 dark:text-gray-300'
+                                        : 'text-gray-500 dark:text-gray-400'
                                 }`}
                             >
                                 {isProfile ? (
@@ -87,19 +94,19 @@ export default function Sidebar() {
                                         <Image
                                             src={user.photoURL}
                                             alt="Foto do usuário"
-                                            width={20}
-                                            height={20}
+                                            width={24}
+                                            height={24}
                                             className="rounded-full"
                                         />
                                     ) : (
-                                        <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-white text-[10px] font-semibold">
+                                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                                             {getUserInitial()}
                                         </div>
                                     )
                                 ) : (
-                                    <Icon className="w-5 h-5" />
+                                    <Icon className="w-6 h-6" />
                                 )}
-                                <span className="text-[10px] font-medium">{item.mobileLabel}</span>
+                                <span className="text-[10px] font-medium">{item.label}</span>
                             </Link>
                         );
                     })}

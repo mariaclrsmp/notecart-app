@@ -436,7 +436,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <main className="p-6 lg:p-8">
+      <main className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-4xl mx-auto">
 
           <div className="mb-4 sm:mb-6">
@@ -498,15 +498,15 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100 mb">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100">
                   <p className="text-xs text-gray-500 mb-2">Total de listas</p>
                   <div className="flex items-center gap-2">
                     <ListIcon className="w-6 h-6" />
                     <p className="text-xl font-bold text-gray-900 mt-1 dark:text-slate-100">{totalListsCount}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 col-span-2 sm:col-span-1 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100">
                   <p className="text-xs text-gray-500 mb-2">Última atualização</p>
                   <div className="flex items-center gap-2">
                     <RotateCw className="w-6 h-6" />
@@ -577,17 +577,17 @@ export default function Home() {
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={handleCloseModal}></div>
 
-              <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
-                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4 text-center">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
+                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
                     <div className="sm:flex sm:items-start">
                       <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
                         <ListPlus className="w-6 h-6 text-orange-600" />
                       </div>
                       <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 id="dialog-title" className="text-base font-semibold text-gray-900 dark:text-gray-100">Criar uma nova lista</h3>
-                        <button className="absolute right-6 top-3 h-2 w-2 text-orange-500 hover:text-orange-600 cursor-pointer" onClick={handleCloseModal}>
-                          <XIcon />
+                        <h3 id="dialog-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Criar uma nova lista</h3>
+                        <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" onClick={handleCloseModal}>
+                          <XIcon className="w-6 h-6" />
                         </button>
                         <div className="mt-4 space-y-4">
                           <div className="w-full">
@@ -620,29 +620,29 @@ export default function Home() {
                           <div className="w-full">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Adicionar itens:</label>
                             <div className="space-y-2">
-                              <div className="flex gap-2">
+                              <div className="flex items-center gap-2 flex-nowrap">
                                 <input
                                   type="text"
                                   value={currentItem}
                                   onChange={(e) => setCurrentItem(e.target.value)}
                                   onKeyPress={handleKeyPress}
                                   placeholder="Nome do item"
-                                  className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                  className="flex-1 min-w-0 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-2.5 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                                 />
                                 <button
                                   type="button"
                                   onClick={handleAddItem}
-                                  className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
+                                  className="w-10 h-10 shrink-0 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
                                 >
-                                  <Plus className="w-4 h-4" />
+                                  <Plus className="w-5 h-5" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={handleOpenImagePopup}
-                                  className="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full transition-colors duration-200 cursor-pointer"
+                                  className="w-10 h-10 shrink-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full transition-colors duration-200 cursor-pointer"
                                   title="Anexar imagem"
                                 >
-                                  <ImageIcon className="w-4 h-4" />
+                                  <ImageIcon className="w-5 h-5" />
                                 </button>
                               </div>
                               <input
@@ -715,9 +715,21 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button type="button" onClick={handleSaveList} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer">Salvar</button>
-                    <button type="button" onClick={handleCloseModal} className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer items-center">Cancelar</button>
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveList}
+                      className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer"
+                    >
+                      Salvar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -728,8 +740,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
-              <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+              <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4 text-center">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
                   <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
                       <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
@@ -795,10 +807,10 @@ export default function Home() {
                           </>
                         )}
                         <button
-                          className="absolute right-6 top-3 text-orange-500 hover:text-red-500 cursor-pointer"
+                          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
                           onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }}
                         >
-                          <XIcon className="w-5 h-5" />
+                          <XIcon className="w-6 h-6" />
                         </button>
 
                         <div className="mt-4">
@@ -905,8 +917,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={handleCloseImagePopup}></div>
               
-              <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4 text-center">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-lg max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
                   <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
                       <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
@@ -953,20 +965,20 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button
-                      type="button"
-                      onClick={handleSaveImage}
-                      className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                    >
-                      Salvar
-                    </button>
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
                     <button
                       type="button"
                       onClick={handleCloseImagePopup}
-                      className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer"
+                      className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer"
                     >
                       Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveImage}
+                      className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer"
+                    >
+                      Salvar
                     </button>
                   </div>
                 </div>
@@ -978,8 +990,8 @@ export default function Home() {
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={handleCancelTemplate}></div>
               
-              <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+              <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4 text-center">
+                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-2xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
                   <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
                       <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
@@ -1086,20 +1098,20 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
-                    <button
-                      type="button"
-                      onClick={handleApproveTemplate}
-                      className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                    >
-                      Criar Lista
-                    </button>
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
                     <button
                       type="button"
                       onClick={handleCancelTemplate}
-                      className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer"
+                      className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer"
                     >
                       Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApproveTemplate}
+                      className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer"
+                    >
+                      Criar Lista
                     </button>
                   </div>
                 </div>
