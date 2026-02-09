@@ -7,6 +7,7 @@ import { XIcon, Trash2 } from "lucide-react";
 export default function ItemDetailsModal({ item, onClose, onSave }) {
   const [details, setDetails] = useState(item?.details || "");
   const [photoUrl, setPhotoUrl] = useState(item?.photoUrl || "");
+  const [priority, setPriority] = useState(item?.priority || "low");
 
   const handleRemovePhoto = () => {
     setPhotoUrl("");
@@ -16,9 +17,34 @@ export default function ItemDetailsModal({ item, onClose, onSave }) {
     onSave({
       ...item,
       details,
-      photoUrl
+      photoUrl,
+      priority
     });
     onClose();
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-600 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+      case 'low':
+      default:
+        return 'bg-green-100 text-green-600 border-green-200';
+    }
+  };
+
+  const getPriorityLabel = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'Alta prioridade';
+      case 'medium':
+        return 'Média prioridade';
+      case 'low':
+      default:
+        return 'Baixa prioridade';
+    }
   };
 
   return (
@@ -62,6 +88,47 @@ export default function ItemDetailsModal({ item, onClose, onSave }) {
                       rows={4}
                       className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md resize-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                      Prioridade:
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPriority('high')}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                          priority === 'high' 
+                            ? 'bg-red-500 text-white border-red-500' 
+                            : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
+                        }`}
+                      >
+                        Alta prioridade
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPriority('medium')}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                          priority === 'medium' 
+                            ? 'bg-yellow-500 text-white border-yellow-500' 
+                            : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'
+                        }`}
+                      >
+                        Média prioridade
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPriority('low')}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                          priority === 'low' 
+                            ? 'bg-green-500 text-white border-green-500' 
+                            : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'
+                        }`}
+                      >
+                        Baixa prioridade
+                      </button>
+                    </div>
                   </div>
 
                   <div>

@@ -19,6 +19,7 @@ export default function RecentLists() {
     const [editedListType, setEditedListType] = useState("grocery");
     const [editedItems, setEditedItems] = useState([]);
     const [editCurrentItem, setEditCurrentItem] = useState("");
+    const [currentEditItemPriority, setCurrentEditItemPriority] = useState("low");
 
     const loadLists = useCallback(async () => {
         if (!user) return;
@@ -147,8 +148,9 @@ export default function RecentLists() {
 
     const handleAddEditItem = () => {
         if (editCurrentItem.trim()) {
-            setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim() }]);
+            setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim(), quantity: 1, details: "", photoUrl: "", priority: currentEditItemPriority }]);
             setEditCurrentItem("");
+            setCurrentEditItemPriority("low");
         }
     };
 
@@ -194,6 +196,30 @@ export default function RecentLists() {
             } catch (error) {
                 console.error('Error toggling item:', error);
             }
+        }
+    };
+
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'high':
+                return 'bg-red-100 text-red-600 border-red-200';
+            case 'medium':
+                return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+            case 'low':
+            default:
+                return 'bg-green-100 text-green-600 border-green-200';
+        }
+    };
+
+    const getPriorityLabel = (priority) => {
+        switch (priority) {
+            case 'high':
+                return 'Alta prioridade';
+            case 'medium':
+                return 'Média prioridade';
+            case 'low':
+            default:
+                return 'Baixa prioridade';
         }
     };
 
@@ -407,7 +433,12 @@ export default function RecentLists() {
                                                                         className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer"
                                                                     />
                                                                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                        <span className={`text-sm text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className={`text-sm text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
+                                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
+                                                                                {getPriorityLabel(item.priority)}
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-2 shrink-0">
                                                                         {isEditMode ? (

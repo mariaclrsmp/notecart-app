@@ -90,19 +90,24 @@ export default function Sidebar() {
                                 }`}
                             >
                                 {isProfile ? (
-                                    user?.photoURL ? (
-                                        <Image
-                                            src={user.photoURL}
-                                            alt="Foto do usuário"
-                                            width={24}
-                                            height={24}
-                                            className="rounded-full"
-                                        />
-                                    ) : (
-                                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                    <>
+                                        {user?.photoURL ? (
+                                            <img
+                                                src={user.photoURL}
+                                                alt="Foto do usuário"
+                                                width={24}
+                                                height={24}
+                                                className="rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div className={`w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-semibold ${user?.photoURL ? 'hidden' : ''}`}>
                                             {getUserInitial()}
                                         </div>
-                                    )
+                                    </>
                                 ) : (
                                     <Icon className="w-6 h-6" />
                                 )}
@@ -163,19 +168,24 @@ export default function Sidebar() {
                                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3 flex-1 min-w-0'} cursor-pointer text-left`}
                                 title="Perfil"
                             >
-                                {user?.photoURL ? (
-                                    <Image
-                                        src={user.photoURL}
-                                        alt="Foto do usuário"
-                                        width={40}
-                                        height={40}
-                                        className="rounded-full shrink-0"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-semibold shrink-0">
+                                <div className="relative shrink-0">
+                                    {user?.photoURL ? (
+                                        <img
+                                            src={user.photoURL}
+                                            alt="Foto do usuário"
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'flex';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className={`w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-semibold ${user?.photoURL ? 'hidden' : ''}`}>
                                         {getUserInitial()}
                                     </div>
-                                )}
+                                </div>
                                 {!isCollapsed && (
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{getUserDisplayName()}</p>

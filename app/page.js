@@ -36,6 +36,7 @@ export default function Home() {
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [templateItems, setTemplateItems] = useState([]);
   const [selectedTemplateType, setSelectedTemplateType] = useState("grocery");
+  const [currentItemPriority, setCurrentItemPriority] = useState("low");
 
   const loadLists = useCallback(async () => {
     if (!user) return;
@@ -83,50 +84,50 @@ export default function Home() {
     grocery: {
       name: "Lista de Compras Básica",
       items: [
-        { id: Date.now() + 1, name: "Arroz", quantity: 1, details: "5kg", photoUrl: "", checked: false },
-        { id: Date.now() + 2, name: "Feijão", quantity: 1, details: "1kg", photoUrl: "", checked: false },
-        { id: Date.now() + 3, name: "Óleo", quantity: 1, details: "900ml", photoUrl: "", checked: false },
-        { id: Date.now() + 4, name: "Açúcar", quantity: 1, details: "1kg", photoUrl: "", checked: false },
-        { id: Date.now() + 5, name: "Sal", quantity: 1, details: "1kg", photoUrl: "", checked: false },
-        { id: Date.now() + 6, name: "Café", quantity: 1, details: "500g", photoUrl: "", checked: false },
-        { id: Date.now() + 7, name: "Leite", quantity: 2, details: "1L", photoUrl: "", checked: false },
-        { id: Date.now() + 8, name: "Pão", quantity: 1, details: "Francês", photoUrl: "", checked: false }
+        { id: Date.now() + 1, name: "Arroz", quantity: 1, details: "5kg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 2, name: "Feijão", quantity: 1, details: "1kg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 3, name: "Óleo", quantity: 1, details: "900ml", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 4, name: "Açúcar", quantity: 1, details: "1kg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 5, name: "Sal", quantity: 1, details: "1kg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 6, name: "Café", quantity: 1, details: "500g", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 7, name: "Leite", quantity: 2, details: "1L", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 8, name: "Pão", quantity: 1, details: "Francês", photoUrl: "", checked: false, priority: "low" }
       ]
     },
     healthcare: {
       name: "Kit Farmácia Básico",
       items: [
-        { id: Date.now() + 1, name: "Dipirona", quantity: 1, details: "500mg", photoUrl: "", checked: false },
-        { id: Date.now() + 2, name: "Paracetamol", quantity: 1, details: "750mg", photoUrl: "", checked: false },
-        { id: Date.now() + 3, name: "Ibuprofeno", quantity: 1, details: "600mg", photoUrl: "", checked: false },
-        { id: Date.now() + 4, name: "Soro Fisiológico", quantity: 2, details: "100ml", photoUrl: "", checked: false },
-        { id: Date.now() + 5, name: "Band-aid", quantity: 1, details: "Caixa", photoUrl: "", checked: false },
-        { id: Date.now() + 6, name: "Álcool 70%", quantity: 1, details: "1L", photoUrl: "", checked: false },
-        { id: Date.now() + 7, name: "Termômetro", quantity: 1, details: "Digital", photoUrl: "", checked: false },
-        { id: Date.now() + 8, name: "Vitamina C", quantity: 1, details: "1g", photoUrl: "", checked: false }
+        { id: Date.now() + 1, name: "Dipirona", quantity: 1, details: "500mg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 2, name: "Paracetamol", quantity: 1, details: "750mg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 3, name: "Ibuprofeno", quantity: 1, details: "600mg", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 4, name: "Soro Fisiológico", quantity: 2, details: "100ml", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 5, name: "Band-aid", quantity: 1, details: "Caixa", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 6, name: "Álcool 70%", quantity: 1, details: "1L", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 7, name: "Termômetro", quantity: 1, details: "Digital", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 8, name: "Vitamina C", quantity: 1, details: "1g", photoUrl: "", checked: false, priority: "low" }
       ]
     },
     personalcare: {
       name: "Cuidados Pessoais Essenciais",
       items: [
-        { id: Date.now() + 1, name: "Shampoo", quantity: 1, details: "400ml", photoUrl: "", checked: false },
-        { id: Date.now() + 2, name: "Condicionador", quantity: 1, details: "400ml", photoUrl: "", checked: false },
-        { id: Date.now() + 3, name: "Sabonete", quantity: 3, details: "90g", photoUrl: "", checked: false },
-        { id: Date.now() + 4, name: "Pasta de dente", quantity: 1, details: "90g", photoUrl: "", checked: false },
-        { id: Date.now() + 5, name: "Desodorante", quantity: 1, details: "150ml", photoUrl: "", checked: false },
-        { id: Date.now() + 6, name: "Papel higiênico", quantity: 1, details: "Pacote 12 rolos", photoUrl: "", checked: false },
-        { id: Date.now() + 7, name: "Absorvente", quantity: 1, details: "Pacote", photoUrl: "", checked: false },
-        { id: Date.now() + 8, name: "Hidratante", quantity: 1, details: "200ml", photoUrl: "", checked: false }
+        { id: Date.now() + 1, name: "Shampoo", quantity: 1, details: "400ml", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 2, name: "Condicionador", quantity: 1, details: "400ml", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 3, name: "Sabonete", quantity: 3, details: "90g", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 4, name: "Pasta de dente", quantity: 1, details: "90g", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 5, name: "Desodorante", quantity: 1, details: "150ml", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 6, name: "Papel higiênico", quantity: 1, details: "Pacote 12 rolos", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 7, name: "Absorvente", quantity: 1, details: "Pacote", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 8, name: "Hidratante", quantity: 1, details: "200ml", photoUrl: "", checked: false, priority: "low" }
       ]
     },
     wishlist: {
       name: "Lista de Desejos",
       items: [
-        { id: Date.now() + 1, name: "Livro", quantity: 1, details: "Título desejado", photoUrl: "", checked: false },
-        { id: Date.now() + 2, name: "Fone de ouvido", quantity: 1, details: "Bluetooth", photoUrl: "", checked: false },
-        { id: Date.now() + 3, name: "Tênis", quantity: 1, details: "Tamanho", photoUrl: "", checked: false },
-        { id: Date.now() + 4, name: "Relógio", quantity: 1, details: "Modelo", photoUrl: "", checked: false },
-        { id: Date.now() + 5, name: "Mochila", quantity: 1, details: "Cor preferida", photoUrl: "", checked: false }
+        { id: Date.now() + 1, name: "Livro", quantity: 1, details: "Título desejado", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 2, name: "Fone de ouvido", quantity: 1, details: "Bluetooth", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 3, name: "Tênis", quantity: 1, details: "Tamanho", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 4, name: "Relógio", quantity: 1, details: "Modelo", photoUrl: "", checked: false, priority: "low" },
+        { id: Date.now() + 5, name: "Mochila", quantity: 1, details: "Cor preferida", photoUrl: "", checked: false, priority: "low" }
       ]
     }
   });
@@ -172,9 +173,10 @@ export default function Home() {
 
   const handleAddItem = () => {
     if (currentItem.trim()) {
-      setItems([...items, { id: Date.now(), name: currentItem.trim(), quantity: 1, details: currentItemDetails.trim(), photoUrl: "" }]);
+      setItems([...items, { id: Date.now(), name: currentItem.trim(), quantity: 1, details: currentItemDetails.trim(), photoUrl: "", priority: currentItemPriority }]);
       setCurrentItem("");
       setCurrentItemDetails("");
+      setCurrentItemPriority("low");
     }
   };
 
@@ -278,7 +280,7 @@ export default function Home() {
 
   const handleAddEditItem = () => {
     if (editCurrentItem.trim()) {
-      setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim(), quantity: 1, details: "", photoUrl: "" }]);
+      setEditedItems([...editedItems, { id: Date.now(), name: editCurrentItem.trim(), quantity: 1, details: "", photoUrl: "", priority: "low" }]);
       setEditCurrentItem("");
     }
   };
@@ -432,6 +434,30 @@ export default function Home() {
     if (Number.isNaN(date.getTime())) return null;
     const diffMs = Date.now() - date.getTime();
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-600 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+      case 'low':
+      default:
+        return 'bg-green-100 text-green-600 border-green-200';
+    }
+  };
+
+  const getPriorityLabel = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'Alta prioridade';
+      case 'medium':
+        return 'Média prioridade';
+      case 'low':
+      default:
+        return 'Baixa prioridade';
+    }
   };
 
   return (
@@ -653,6 +679,44 @@ export default function Home() {
                                 placeholder="Descrição (opcional): marca, tamanho, observações..."
                                 className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                               />
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Prioridade:</label>
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setCurrentItemPriority('high')}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                                      currentItemPriority === 'high' 
+                                        ? 'bg-red-500 text-white border-red-500' 
+                                        : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
+                                    }`}
+                                  >
+                                    Alta prioridade
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setCurrentItemPriority('medium')}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                                      currentItemPriority === 'medium' 
+                                        ? 'bg-yellow-500 text-white border-yellow-500' 
+                                        : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'
+                                    }`}
+                                  >
+                                    Média prioridade
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setCurrentItemPriority('low')}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
+                                      currentItemPriority === 'low' 
+                                        ? 'bg-green-500 text-white border-green-500' 
+                                        : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'
+                                    }`}
+                                  >
+                                    Baixa prioridade
+                                  </button>
+                                </div>
+                              </div>
                             </div>
 
                             {items.length > 0 && (
@@ -667,7 +731,12 @@ export default function Home() {
                                       />
                                     )}
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{item.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{item.name}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
+                                          {getPriorityLabel(item.priority)}
+                                        </span>
+                                      </div>
                                       {item.details && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.details}</span>
                                       )}
@@ -829,7 +898,12 @@ export default function Home() {
                                       className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer"
                                     />
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <span className={`text-sm font-medium text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-sm font-medium text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
+                                          {getPriorityLabel(item.priority)}
+                                        </span>
+                                      </div>
                                       {item.details && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{item.details}</span>
                                       )}
