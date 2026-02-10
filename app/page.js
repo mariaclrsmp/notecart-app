@@ -37,6 +37,8 @@ export default function Home() {
   const [templateItems, setTemplateItems] = useState([]);
   const [selectedTemplateType, setSelectedTemplateType] = useState("grocery");
   const [currentItemPriority, setCurrentItemPriority] = useState("low");
+  const [newDirectItem, setNewDirectItem] = useState("");
+  const [newDirectItemPriority, setNewDirectItemPriority] = useState("low");
 
   const loadLists = useCallback(async () => {
     if (!user) return;
@@ -399,6 +401,32 @@ export default function Home() {
     }
   };
 
+  const handleAddItemToExistingList = async () => {
+    if (!newDirectItem.trim() || !selectedList) return;
+    const newItem = { id: Date.now(), name: newDirectItem.trim(), quantity: 1, details: "", photoUrl: "", checked: false, priority: newDirectItemPriority };
+    const updatedItems = [...selectedList.items, newItem];
+    try {
+      const token = await user.getIdToken();
+      await listsService.update(selectedList.id, {
+        ...selectedList,
+        items: updatedItems
+      }, token);
+      setSelectedList({ ...selectedList, items: updatedItems });
+      await loadLists();
+      setNewDirectItem("");
+      setNewDirectItemPriority("low");
+    } catch (error) {
+      console.error('Error adding item to list:', error);
+    }
+  };
+
+  const handleDirectItemKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddItemToExistingList();
+    }
+  };
+
   const handleDeleteItemFromList = async (listId, itemId) => {
     if (!confirm("Deseja realmente excluir este item?")) return;
     try {
@@ -658,17 +686,17 @@ export default function Home() {
                                 <button
                                   type="button"
                                   onClick={handleAddItem}
-                                  className="w-10 h-10 shrink-0 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
+                                  className="w-9 h-9 shrink-0 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
                                 >
-                                  <Plus className="w-5 h-5" />
+                                  <Plus className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={handleOpenImagePopup}
-                                  className="w-10 h-10 shrink-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full transition-colors duration-200 cursor-pointer"
+                                  className="w-9 h-9 shrink-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full transition-colors duration-200 cursor-pointer"
                                   title="Anexar imagem"
                                 >
-                                  <ImageIcon className="w-5 h-5" />
+                                  <ImageIcon className="w-4 h-4" />
                                 </button>
                               </div>
                               <input
@@ -676,45 +704,15 @@ export default function Home() {
                                 value={currentItemDetails}
                                 onChange={(e) => setCurrentItemDetails(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Descrição (opcional): marca, tamanho, observações..."
+                                placeholder="Descrição (opcional): marca, tamanho..."
                                 className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
                               />
-                              <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Prioridade:</label>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setCurrentItemPriority('high')}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
-                                      currentItemPriority === 'high' 
-                                        ? 'bg-red-500 text-white border-red-500' 
-                                        : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
-                                    }`}
-                                  >
-                                    Alta prioridade
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setCurrentItemPriority('medium')}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
-                                      currentItemPriority === 'medium' 
-                                        ? 'bg-yellow-500 text-white border-yellow-500' 
-                                        : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'
-                                    }`}
-                                  >
-                                    Média prioridade
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setCurrentItemPriority('low')}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 cursor-pointer ${
-                                      currentItemPriority === 'low' 
-                                        ? 'bg-green-500 text-white border-green-500' 
-                                        : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'
-                                    }`}
-                                  >
-                                    Baixa prioridade
-                                  </button>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <label className="text-xs font-medium text-gray-700 dark:text-gray-200">Prioridade:</label>
+                                <div className="flex gap-1.5 flex-wrap">
+                                  <button type="button" onClick={() => setCurrentItemPriority('high')} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors duration-200 cursor-pointer ${currentItemPriority === 'high' ? 'bg-red-500 text-white border-red-500' : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'}`}>Alta</button>
+                                  <button type="button" onClick={() => setCurrentItemPriority('medium')} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors duration-200 cursor-pointer ${currentItemPriority === 'medium' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'}`}>Média</button>
+                                  <button type="button" onClick={() => setCurrentItemPriority('low')} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors duration-200 cursor-pointer ${currentItemPriority === 'low' ? 'bg-green-500 text-white border-green-500' : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'}`}>Baixa</button>
                                 </div>
                               </div>
                             </div>
@@ -722,7 +720,7 @@ export default function Home() {
                             {items.length > 0 && (
                               <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
                                 {items.map((item) => (
-                                  <div key={item.id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-950 px-3 py-3 rounded-lg">
+                                  <div key={item.id} className="flex items-center gap-2 sm:gap-3 bg-gray-50 dark:bg-gray-950 px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg">
                                     {item.photoUrl && (
                                       <img 
                                         src={item.photoUrl} 
@@ -731,9 +729,9 @@ export default function Home() {
                                       />
                                     )}
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{item.name}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
+                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${getPriorityColor(item.priority)}`}>
                                           {getPriorityLabel(item.priority)}
                                         </span>
                                       </div>
@@ -741,8 +739,8 @@ export default function Home() {
                                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.details}</span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                      <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-1.5 py-1">
                                         <button
                                           type="button"
                                           onClick={() => handleUpdateItemQuantity(item.id, -1, false)}
@@ -886,21 +884,79 @@ export default function Home() {
                           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">
                             {selectedList.items.length} Itens
                           </h4>
+                          {!isEditMode && (
+                            <div className="mb-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={newDirectItem}
+                                  onChange={(e) => setNewDirectItem(e.target.value)}
+                                  onKeyPress={handleDirectItemKeyPress}
+                                  placeholder="Adicionar novo item..."
+                                  className="flex-1 min-w-0 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleAddItemToExistingList}
+                                  disabled={!newDirectItem.trim()}
+                                  className="w-9 h-9 shrink-0 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Prioridade:</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewDirectItemPriority('high')}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${
+                                    newDirectItemPriority === 'high'
+                                      ? 'bg-red-500 text-white border-red-500'
+                                      : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
+                                  }`}
+                                >
+                                  Alta
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewDirectItemPriority('medium')}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${
+                                    newDirectItemPriority === 'medium'
+                                      ? 'bg-yellow-500 text-white border-yellow-500'
+                                      : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'
+                                  }`}
+                                >
+                                  Média
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewDirectItemPriority('low')}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${
+                                    newDirectItemPriority === 'low'
+                                      ? 'bg-green-500 text-white border-green-500'
+                                      : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'
+                                  }`}
+                                >
+                                  Baixa
+                                </button>
+                              </div>
+                            </div>
+                          )}
                           {selectedList.items.length > 0 ? (
                             <div className="max-h-96 overflow-y-auto space-y-2">
                               {selectedList.items.map((item) => (
                                 <div key={item.id} className={`bg-gray-50 dark:bg-gray-950 rounded-lg transition-all ${item.checked ? 'opacity-60' : ''}`}>
-                                  <div className="flex items-center gap-3 px-3 py-3">
+                                  <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-3">
                                     <input
                                       type="checkbox"
                                       checked={item.checked || false}
                                       onChange={() => handleToggleItemChecked(item.id, false)}
-                                      className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer"
+                                      className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer shrink-0"
                                     />
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className={`text-sm font-medium text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
+                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${getPriorityColor(item.priority)}`}>
                                           {getPriorityLabel(item.priority)}
                                         </span>
                                       </div>
@@ -908,22 +964,14 @@ export default function Home() {
                                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{item.details}</span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUpdateItemQuantityDirect(item.id, -1)}
-                                          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                                        >
-                                          <Minus className="w-4 h-4" />
+                                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                      <div className="flex items-center gap-0.5 bg-white dark:bg-gray-900 rounded-lg px-1.5 py-1">
+                                        <button type="button" onClick={() => handleUpdateItemQuantityDirect(item.id, -1)} className="text-orange-500 hover:text-orange-600 cursor-pointer">
+                                          <Minus className="w-3.5 h-3.5" />
                                         </button>
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[24px] text-center">{item.quantity || 1}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUpdateItemQuantityDirect(item.id, 1)}
-                                          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                                        >
-                                          <Plus className="w-4 h-4" />
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[20px] text-center">{item.quantity || 1}</span>
+                                        <button type="button" onClick={() => handleUpdateItemQuantityDirect(item.id, 1)} className="text-orange-500 hover:text-orange-600 cursor-pointer">
+                                          <Plus className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
                                       <button
@@ -937,15 +985,10 @@ export default function Home() {
                                         title={item.photoUrl ? (expandedItemId === item.id ? "Ocultar imagem" : "Ver imagem") : "Sem imagem"}
                                         disabled={!item.photoUrl}
                                       >
-                                        <ImageIcon className="w-5 h-5" />
+                                        <ImageIcon className="w-4 h-4" />
                                       </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteItemFromList(selectedList.id, item.id)}
-                                        className="text-orange-500 hover:text-red-500 transition-colors duration-200"
-                                        title="Excluir item"
-                                      >
-                                        <Trash2 className="w-5 h-5" />
+                                      <button type="button" onClick={() => handleDeleteItemFromList(selectedList.id, item.id)} className="text-orange-500 hover:text-red-500 cursor-pointer" title="Excluir item">
+                                        <Trash2 className="w-4 h-4" />
                                       </button>
                                     </div>
                                   </div>

@@ -20,6 +20,8 @@ export default function RecentLists() {
     const [editedItems, setEditedItems] = useState([]);
     const [editCurrentItem, setEditCurrentItem] = useState("");
     const [currentEditItemPriority, setCurrentEditItemPriority] = useState("low");
+    const [newDirectItem, setNewDirectItem] = useState("");
+    const [newDirectItemPriority, setNewDirectItemPriority] = useState("low");
 
     const loadLists = useCallback(async () => {
         if (!user) return;
@@ -154,6 +156,32 @@ export default function RecentLists() {
         }
     };
 
+    const handleAddItemToExistingList = async () => {
+        if (!newDirectItem.trim() || !selectedList) return;
+        const newItem = { id: Date.now(), name: newDirectItem.trim(), quantity: 1, details: "", photoUrl: "", checked: false, priority: newDirectItemPriority };
+        const updatedItems = [...selectedList.items, newItem];
+        try {
+            const token = await user.getIdToken();
+            await listsService.update(selectedList.id, {
+                ...selectedList,
+                items: updatedItems
+            }, token);
+            setSelectedList({ ...selectedList, items: updatedItems });
+            await loadLists();
+            setNewDirectItem("");
+            setNewDirectItemPriority("low");
+        } catch (error) {
+            console.error('Error adding item to list:', error);
+        }
+    };
+
+    const handleDirectItemKeyPress = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleAddItemToExistingList();
+        }
+    };
+
     const handleRemoveEditItem = (itemId) => {
         setEditedItems(editedItems.filter(item => item.id !== itemId));
     };
@@ -214,12 +242,11 @@ export default function RecentLists() {
     const getPriorityLabel = (priority) => {
         switch (priority) {
             case 'high':
-                return 'Alta prioridade';
+                return 'Alta';
             case 'medium':
-                return 'Média prioridade';
+                return 'Média';
             case 'low':
-            default:
-                return 'Baixa prioridade';
+                return 'Baixa';
         }
     };
 
@@ -227,7 +254,6 @@ export default function RecentLists() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
             <main className="p-4 sm:p-6 lg:p-8">
                 <div className="max-w-4xl mx-auto">
-
                     <div className="mb-4 sm:mb-6">
                         <Link href="/" className="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium mb-3 sm:mb-4">
                             <ChevronLeft className="w-5 h-5 mr-2" />
@@ -238,25 +264,14 @@ export default function RecentLists() {
 
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 mb-6">
                         <div className="grid gap-3 sm:grid-cols-3">
-
                             <div className="sm:col-span-1">
                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Buscar</label>
-                                <input
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Digite o nome da lista"
-                                    className="w-full rounded-xl bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm"
-                                />
+                                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Digite o nome da lista" className="w-full rounded-xl bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm" />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Filtro</label>
                                 <div className="relative">
-                                    <select
-                                        value={typeFilter}
-                                        onChange={(e) => setTypeFilter(e.target.value)}
-                                        className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer"
-                                    >
-
+                                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer">
                                         <option value="all">Todos os tipos</option>
                                         <option value="grocery">Mercado</option>
                                         <option value="healthcare">Saúde</option>
@@ -269,12 +284,7 @@ export default function RecentLists() {
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Ordenação</label>
                                 <div className="relative">
-                                    <select
-                                        value={sortBy}
-                                        onChange={(e) => setSortBy(e.target.value)}
-                                        className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer"
-                                    >
-
+                                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full rounded-xl bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-200 focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm appearance-none cursor-pointer">
                                         <option value="recent">Mais recentes</option>
                                         <option value="alpha">Alfabética</option>
                                         <option value="items">Mais itens</option>
@@ -303,19 +313,13 @@ export default function RecentLists() {
                             ) : displayedLists.map((list) => {
                                 const getIconColor = (type) => {
                                     switch (type) {
-                                        case "grocery":
-                                            return "bg-blue-100 text-blue-600";
-                                        case "healthcare":
-                                            return "bg-red-100 text-red-600";
-                                        case "personalcare":
-                                            return "bg-purple-100 text-purple-600";
-                                        case "wishlist":
-                                            return "bg-pink-100 text-pink-600";
-                                        default:
-                                            return "bg-blue-100 text-blue-600";
+                                        case "grocery": return "bg-blue-100 text-blue-600";
+                                        case "healthcare": return "bg-red-100 text-red-600";
+                                        case "personalcare": return "bg-purple-100 text-purple-600";
+                                        case "wishlist": return "bg-pink-100 text-pink-600";
+                                        default: return "bg-blue-100 text-blue-600";
                                     }
                                 };
-
                                 return (
                                     <div key={list.id} className="bg-gradient-to-br from-teal-700 to-teal-950 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 p-5 sm:p-6 text-white relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
@@ -334,10 +338,7 @@ export default function RecentLists() {
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
-                                            <button
-                                                onClick={() => handleViewDetails(list)}
-                                                className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-colors duration-200 cursor-pointer backdrop-blur-sm"
-                                            >
+                                            <button onClick={() => handleViewDetails(list)} className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-colors duration-200 cursor-pointer backdrop-blur-sm">
                                                 Ver na loja
                                             </button>
                                         </div>
@@ -350,35 +351,24 @@ export default function RecentLists() {
                     {showDetailsModal && selectedList && (
                         <div className="fixed inset-0 z-50 overflow-y-auto">
                             <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
-
-                            <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
-                                    <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div className="flex min-h-full items-center justify-center p-4 pb-20 sm:pb-4">
+                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
+                                    <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
                                         <div className="sm:flex sm:items-start">
                                             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
                                                 {getListIcon(isEditMode ? editedListType : selectedList.type)}
                                             </div>
                                             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-
                                                 {isEditMode ? (
                                                     <div className="space-y-4">
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Nome da lista:</label>
-                                                            <input
-                                                                type="text"
-                                                                value={editedListName}
-                                                                onChange={(e) => setEditedListName(e.target.value)}
-                                                                className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
-                                                            />
+                                                            <input type="text" value={editedListName} onChange={(e) => setEditedListName(e.target.value)} className="w-full rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md" />
                                                         </div>
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Tipo de lista:</label>
                                                             <div className="relative">
-                                                                <select
-                                                                    value={editedListType}
-                                                                    onChange={(e) => setEditedListType(e.target.value)}
-                                                                    className="w-full rounded-lg bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer"
-                                                                >
+                                                                <select value={editedListType} onChange={(e) => setEditedListType(e.target.value)} className="w-full rounded-lg bg-transparent text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer">
                                                                     <option value="grocery">Mercado</option>
                                                                     <option value="healthcare">Saúde</option>
                                                                     <option value="personalcare">Cuidados pessoais</option>
@@ -394,29 +384,33 @@ export default function RecentLists() {
                                                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{getListTypeLabel(selectedList.type)}</p>
                                                     </>
                                                 )}
-                                                <button className="absolute right-6 top-3 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }} aria-label="Fechar">
+                                                <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" onClick={() => { setShowDetailsModal(false); setIsEditMode(false); }}>
                                                     <XIcon className="w-5 h-5" />
                                                 </button>
 
                                                 <div className="mt-4">
                                                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Itens da lista ({isEditMode ? editedItems.length : selectedList.items?.length || 0})</h4>
+                                                    {!isEditMode && (
+                                                        <div className="mb-3 space-y-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <input type="text" value={newDirectItem} onChange={(e) => setNewDirectItem(e.target.value)} onKeyPress={handleDirectItemKeyPress} placeholder="Adicionar novo item..." className="flex-1 min-w-0 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md" />
+                                                                <button type="button" onClick={handleAddItemToExistingList} disabled={!newDirectItem.trim()} className="w-9 h-9 shrink-0 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                                                    <Plus className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400">Prioridade:</span>
+                                                                <button type="button" onClick={() => setNewDirectItemPriority('high')} className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${newDirectItemPriority === 'high' ? 'bg-red-500 text-white border-red-500' : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'}`}>Alta</button>
+                                                                <button type="button" onClick={() => setNewDirectItemPriority('medium')} className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${newDirectItemPriority === 'medium' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200'}`}>Média</button>
+                                                                <button type="button" onClick={() => setNewDirectItemPriority('low')} className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors duration-200 cursor-pointer ${newDirectItemPriority === 'low' ? 'bg-green-500 text-white border-green-500' : 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200'}`}>Baixa</button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     {isEditMode && (
                                                         <div className="mb-3">
                                                             <div className="flex gap-2">
-                                                                <input
-                                                                    type="text"
-                                                                    value={editCurrentItem}
-                                                                    onChange={(e) => setEditCurrentItem(e.target.value)}
-                                                                    onKeyPress={handleEditKeyPress}
-                                                                    placeholder="Digite um item"
-                                                                    className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md"
-                                                                />
-
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={handleAddEditItem}
-                                                                    className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer"
-                                                                >
+                                                                <input type="text" value={editCurrentItem} onChange={(e) => setEditCurrentItem(e.target.value)} onKeyPress={handleEditKeyPress} placeholder="Digite um item" className="flex-1 rounded-lg bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-700 dark:text-slate-100 text-sm border border-slate-200 dark:border-gray-700 px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md" />
+                                                                <button type="button" onClick={handleAddEditItem} className="w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors duration-200 cursor-pointer">
                                                                     <Plus className="w-4 h-4" />
                                                                 </button>
                                                             </div>
@@ -425,67 +419,26 @@ export default function RecentLists() {
                                                     {(isEditMode ? editedItems : selectedList.items)?.length > 0 ? (
                                                         <div className="max-h-96 overflow-y-auto space-y-2">
                                                             {(isEditMode ? editedItems : selectedList.items).map((item) => (
-                                                                <div key={item.id} className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-950 px-3 py-3 rounded-lg transition-all ${item.checked ? 'opacity-60' : ''}`}>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={item.checked || false}
-                                                                        onChange={() => handleToggleItemChecked(item.id, isEditMode)}
-                                                                        className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer"
-                                                                    />
-                                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                        <div className="flex items-center gap-2">
+                                                                <div key={item.id} className={`flex items-center gap-2 sm:gap-3 bg-gray-50 dark:bg-gray-950 px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg transition-all ${item.checked ? 'opacity-60' : ''}`}>
+                                                                    <input type="checkbox" checked={item.checked || false} onChange={() => handleToggleItemChecked(item.id, isEditMode)} className="w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-orange-500 cursor-pointer shrink-0" />
+                                                                    <div className="flex flex-col flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-1.5 flex-wrap">
                                                                             <span className={`text-sm text-gray-700 dark:text-gray-200 truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
-                                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(item.priority)}`}>
-                                                                                {getPriorityLabel(item.priority)}
-                                                                            </span>
+                                                                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${getPriorityColor(item.priority)}`}>{getPriorityLabel(item.priority)}</span>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                                                         {isEditMode ? (
                                                                             <>
-                                                                                <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => handleUpdateItemQuantity(item.id, -1, true)}
-                                                                                        className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                                                                                    >
-                                                                                        <Minus className="w-4 h-4" />
-                                                                                    </button>
-                                                                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[24px] text-center">{item.quantity || 1}</span>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => handleUpdateItemQuantity(item.id, 1, true)}
-                                                                                        className="text-orange-500 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                                                                                    >
-                                                                                        <Plus className="w-4 h-4" />
-                                                                                    </button>
+                                                                                <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-lg px-1.5 py-1">
+                                                                                    <button type="button" onClick={() => handleUpdateItemQuantity(item.id, -1, true)} className="text-orange-500 hover:text-orange-600 cursor-pointer"><Minus className="w-3.5 h-3.5" /></button>
+                                                                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[20px] text-center">{item.quantity || 1}</span>
+                                                                                    <button type="button" onClick={() => handleUpdateItemQuantity(item.id, 1, true)} className="text-orange-500 hover:text-orange-600 cursor-pointer"><Plus className="w-3.5 h-3.5" /></button>
                                                                                 </div>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="text-green-500 hover:text-green-600 transition-colors duration-200 cursor-pointer"
-                                                                                    title="Adicionar imagem"
-                                                                                >
-                                                                                    <ImageIcon className="w-5 h-5" />
-                                                                                </button>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => handleRemoveEditItem(item.id)}
-                                                                                    className="text-orange-500 hover:text-red-500 transition-colors duration-200 cursor-pointer"
-                                                                                >
-                                                                                    <XIcon className="w-5 h-5" />
-                                                                                </button>
+                                                                                <button type="button" onClick={() => handleRemoveEditItem(item.id)} className="text-orange-500 hover:text-red-500 cursor-pointer"><XIcon className="w-4 h-4" /></button>
                                                                             </>
                                                                         ) : (
-                                                                            <>
-                                                                                <span className="text-xs font-medium text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">x{item.quantity || 1}</span>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="text-green-500 hover:text-green-600 transition-colors duration-200"
-                                                                                    title="Ver imagem"
-                                                                                >
-                                                                                    <ImageIcon className="w-5 h-5" />
-                                                                                </button>
-                                                                            </>
+                                                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 rounded-lg px-2 py-1">x{item.quantity || 1}</span>
                                                                         )}
                                                                     </div>
                                                                 </div>
@@ -498,42 +451,23 @@ export default function RecentLists() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                    <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
                                         {isEditMode ? (
                                             <>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleSaveEdit}
-                                                    className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                                                >
-                                                    Salvar
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleCancelEdit}
-                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer"
-                                                >
-                                                    Cancelar
-                                                </button>
+                                                <button type="button" onClick={handleCancelEdit} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer">Cancelar</button>
+                                                <button type="button" onClick={handleSaveEdit} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer">Salvar</button>
                                             </>
                                         ) : (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleEditMode}
-                                                    className="mt-3 inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:mt-0 sm:w-auto cursor-pointer items-center gap-2"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                    Editar
-                                                </button>
-                                            </>
+                                            <button type="button" onClick={handleEditMode} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                                                <Edit2 className="w-4 h-4" />
+                                                Editar
+                                            </button>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
-
                 </div>
             </main>
         </div>

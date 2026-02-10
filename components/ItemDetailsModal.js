@@ -38,12 +38,12 @@ export default function ItemDetailsModal({ item, onClose, onSave }) {
   const getPriorityLabel = (priority) => {
     switch (priority) {
       case 'high':
-        return 'Alta prioridade';
+        return 'Alta';
       case 'medium':
-        return 'Média prioridade';
+        return 'Média';
       case 'low':
       default:
-        return 'Baixa prioridade';
+        return 'Baixa';
     }
   };
 
