@@ -14,17 +14,18 @@ export default function AuthenticatedLayout({ children }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    const isPublicRoute = publicRoutes.includes(pathname);
+    const isAuthRoute = publicRoutes.includes(pathname);
+    const isPublicRoute = isAuthRoute || pathname.startsWith("/list/");
 
     useEffect(() => {
         if (!loading) {
             if (!user && !isPublicRoute) {
                 router.push("/login");
-            } else if (user && isPublicRoute) {
+            } else if (user && isAuthRoute) {
                 router.push("/");
             }
         }
-    }, [user, loading, isPublicRoute, router, pathname]);
+    }, [user, loading, isPublicRoute, isAuthRoute, router, pathname]);
 
     if (loading) {
         return (

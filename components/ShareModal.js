@@ -76,21 +76,10 @@ export default function ShareModal({ listId, listName, items = [], onClose }) {
     };
 
     const handleShareWhatsApp = () => {
-        const priorityEmoji = { high: "🔴", medium: "🟡", low: "🟢" };
-        let text = `📋 *${listName}*\n\n`;
-        if (items.length > 0) {
-            items.forEach((item, i) => {
-                const emoji = priorityEmoji[item.priority] || "⚪";
-                const checked = item.checked ? "✅" : "⬜";
-                text += `${checked} ${item.name} (x${item.quantity || 1}) ${emoji}\n`;
-            });
-            const total = items.length;
-            const done = items.filter(i => i.checked).length;
-            text += `\n📊 ${done}/${total} concluídos`;
-        } else {
-            text += "Lista vazia";
-        }
-        text += `\n\n_Enviado via NoteCart_`;
+        const baseUrl = window.location.origin;
+        const listUrl = `${baseUrl}/list/${listId}`;
+        const itemCount = items.length;
+        const text = `� *${listName}*\n${itemCount} ${itemCount === 1 ? "item" : "itens"}\n\n${listUrl}\n\n_Enviado via NoteCart_`;
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, "_blank");
     };
