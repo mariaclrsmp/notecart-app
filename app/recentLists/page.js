@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon, Image as ImageIcon, Info, Minus } from "lucide-react";
+import { ShoppingCart, Heart, Pill, Sparkles, Trash2, ChevronLeft, XIcon, Edit2, Plus, ChevronDownIcon, Image as ImageIcon, Info, Minus, Share2 } from "lucide-react";
+import ShareModal from "@/components/ShareModal";
 import { listsService } from "@/lib/services/listsService";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,6 +23,7 @@ export default function RecentLists() {
     const [currentEditItemPriority, setCurrentEditItemPriority] = useState("low");
     const [newDirectItem, setNewDirectItem] = useState("");
     const [newDirectItemPriority, setNewDirectItemPriority] = useState("low");
+    const [shareTarget, setShareTarget] = useState(null);
 
     const loadLists = useCallback(async () => {
         if (!user) return;
@@ -334,9 +336,14 @@ export default function RecentLists() {
                                                         <p className="text-sm text-teal-200">{list.items.length} {list.items.length === 1 ? "produto" : "produtos"}</p>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteList(list.id)} className="text-white/60 hover:text-white transition-colors duration-200" title="Excluir lista">
-                                                    <Trash2 className="w-5 h-5" />
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => setShareTarget({ id: list.id, name: list.name })} className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer" title="Compartilhar lista">
+                                                        <Share2 className="w-5 h-5" />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteList(list.id)} className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer" title="Excluir lista">
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <button onClick={() => handleViewDetails(list)} className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-colors duration-200 cursor-pointer backdrop-blur-sm">
                                                 Ver na loja
@@ -458,15 +465,29 @@ export default function RecentLists() {
                                                 <button type="button" onClick={handleSaveEdit} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer">Salvar</button>
                                             </>
                                         ) : (
-                                            <button type="button" onClick={handleEditMode} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
-                                                <Edit2 className="w-4 h-4" />
-                                                Editar
-                                            </button>
+                                            <>
+                                                <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                                                    <Share2 className="w-4 h-4" />
+                                                    Compartilhar
+                                                </button>
+                                                <button type="button" onClick={handleEditMode} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                                                    <Edit2 className="w-4 h-4" />
+                                                    Editar
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {shareTarget && (
+                        <ShareModal
+                            listId={shareTarget.id}
+                            listName={shareTarget.name}
+                            onClose={() => setShareTarget(null)}
+                        />
                     )}
                 </div>
             </main>

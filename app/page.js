@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDownIcon, XIcon, ShoppingCart, Heart, Pill, Sparkles, Trash2, ListPlus, Plus, Edit2, Minus, Info, Image as ImageIcon, ListIcon, RotateCw } from "lucide-react";
+import { ChevronDownIcon, XIcon, ShoppingCart, Heart, Pill, Sparkles, Trash2, ListPlus, Plus, Edit2, Minus, Info, Image as ImageIcon, ListIcon, RotateCw, Share2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { listsService } from "@/lib/services/listsService";
 import { useAuth } from "@/contexts/AuthContext";
 import ItemDetailsModal from "@/components/ItemDetailsModal";
+import ShareModal from "@/components/ShareModal";
 import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
   const [currentItemPriority, setCurrentItemPriority] = useState("low");
   const [newDirectItem, setNewDirectItem] = useState("");
   const [newDirectItemPriority, setNewDirectItemPriority] = useState("low");
+  const [shareTarget, setShareTarget] = useState(null);
 
   const loadLists = useCallback(async () => {
     if (!user) return;
@@ -534,13 +536,22 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteListWrapper(featuredList.id)}
-                        className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
-                        title="Excluir lista"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShareTarget({ id: featuredList.id, name: featuredList.name })}
+                          className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+                          title="Compartilhar lista"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteListWrapper(featuredList.id)}
+                          className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+                          title="Excluir lista"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                     <button
                       onClick={() => handleViewDetails(featuredList)}
@@ -611,15 +622,29 @@ export default function Home() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {curatedLists.map((list) => (
-                      <button
+                      <div
                         key={list.id}
-                        type="button"
-                        onClick={() => handleViewDetails(list)}
-                        className="text-left bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100"
+                        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 dark:bg-gray-900 dark:border-gray-800 dark:text-slate-100"
                       >
-                        <p className="text-sm font-semibold text-gray-900 truncate dark:text-slate-100">{list.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">{(list.items?.length || 0)} {(list.items?.length || 0) === 1 ? "item" : "itens"}</p>
-                      </button>
+                        <div className="flex items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleViewDetails(list)}
+                            className="text-left flex-1 min-w-0 cursor-pointer"
+                          >
+                            <p className="text-sm font-semibold text-gray-900 truncate dark:text-slate-100">{list.name}</p>
+                            <p className="text-xs text-gray-500 mt-1">{(list.items?.length || 0)} {(list.items?.length || 0) === 1 ? "item" : "itens"}</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShareTarget({ id: list.id, name: list.name })}
+                            className="text-gray-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer shrink-0 mt-0.5"
+                            title="Compartilhar lista"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -1018,8 +1043,35 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
+                  {isEditMode ? (
+                    <>
+                      <button type="button" onClick={() => { setIsEditMode(false); setEditedListName(selectedList.name); setEditedListType(selectedList.type); setEditedItems(selectedList.items || []); }} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer">Cancelar</button>
+                      <button type="button" onClick={handleSaveEdit} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer">Salvar</button>
+                    </>
+                  ) : (
+                    <>
+                      <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                        <Share2 className="w-4 h-4" />
+                        Compartilhar
+                      </button>
+                      <button type="button" onClick={() => setIsEditMode(true)} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                        <Edit2 className="w-4 h-4" />
+                        Editar
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+          )}
+
+          {shareTarget && (
+            <ShareModal
+              listId={shareTarget.id}
+              listName={shareTarget.name}
+              onClose={() => setShareTarget(null)}
+            />
           )}
 
           {showItemDetailsModal && selectedItem && (
