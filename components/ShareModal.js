@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { XIcon, Share2, Trash2, Loader2, UserPlus } from "lucide-react";
+import { XIcon, Share2, Trash2, Loader2, UserPlus, MessageCircle } from "lucide-react";
 import { listsService } from "@/lib/services/listsService";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function ShareModal({ listId, listName, onClose }) {
+export default function ShareModal({ listId, listName, items = [], onClose }) {
     const { user } = useAuth();
     const [email, setEmail] = useState("");
     const [sharedUsers, setSharedUsers] = useState([]);
@@ -75,6 +75,26 @@ export default function ShareModal({ listId, listName, onClose }) {
         }
     };
 
+    const handleShareWhatsApp = () => {
+        const priorityEmoji = { high: "🔴", medium: "🟡", low: "🟢" };
+        let text = `📋 *${listName}*\n\n`;
+        if (items.length > 0) {
+            items.forEach((item, i) => {
+                const emoji = priorityEmoji[item.priority] || "⚪";
+                const checked = item.checked ? "✅" : "⬜";
+                text += `${checked} ${item.name} (x${item.quantity || 1}) ${emoji}\n`;
+            });
+            const total = items.length;
+            const done = items.filter(i => i.checked).length;
+            text += `\n📊 ${done}/${total} concluídos`;
+        } else {
+            text += "Lista vazia";
+        }
+        text += `\n\n_Enviado via NoteCart_`;
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, "_blank");
+    };
+
     return (
         <div className="fixed inset-0 z-[60] overflow-y-auto">
             <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={onClose}></div>
@@ -129,6 +149,17 @@ export default function ShareModal({ listId, listName, onClose }) {
                             {success && (
                                 <p className="text-xs text-green-500 dark:text-green-400">{success}</p>
                             )}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                type="button"
+                                onClick={handleShareWhatsApp}
+                                className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-medium text-sm py-2.5 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                Enviar por WhatsApp
+                            </button>
                         </div>
 
                         <div className="mt-5">

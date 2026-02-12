@@ -337,7 +337,7 @@ export default function RecentLists() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={() => setShareTarget({ id: list.id, name: list.name })} className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer" title="Compartilhar lista">
+                                                    <button onClick={() => setShareTarget({ id: list.id, name: list.name, items: list.items || [] })} className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer" title="Compartilhar lista">
                                                         <Share2 className="w-5 h-5" />
                                                     </button>
                                                     <button onClick={() => handleDeleteList(list.id)} className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer" title="Excluir lista">
@@ -358,8 +358,8 @@ export default function RecentLists() {
                     {showDetailsModal && selectedList && (
                         <div className="fixed inset-0 z-50 overflow-y-auto">
                             <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
-                            <div className="flex min-h-full items-center justify-center p-4 pb-20 sm:pb-4">
-                                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
+                            <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4">
+                                <div className="relative transform overflow-hidden rounded-2xl sm:rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-120px)] sm:max-h-[85vh] flex flex-col">
                                     <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
                                         <div className="sm:flex sm:items-start">
                                             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
@@ -466,7 +466,7 @@ export default function RecentLists() {
                                             </>
                                         ) : (
                                             <>
-                                                <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                                                <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name, items: selectedList.items || [] })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
                                                     <Share2 className="w-4 h-4" />
                                                     Compartilhar
                                                 </button>
@@ -486,6 +486,7 @@ export default function RecentLists() {
                         <ShareModal
                             listId={shareTarget.id}
                             listName={shareTarget.name}
+                            items={shareTarget.items || []}
                             onClose={() => setShareTarget(null)}
                         />
                     )}

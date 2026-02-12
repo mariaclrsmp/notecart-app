@@ -538,7 +538,7 @@ export default function Home() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setShareTarget({ id: featuredList.id, name: featuredList.name })}
+                          onClick={() => setShareTarget({ id: featuredList.id, name: featuredList.name, items: featuredList.items || [] })}
                           className="text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
                           title="Compartilhar lista"
                         >
@@ -637,7 +637,7 @@ export default function Home() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setShareTarget({ id: list.id, name: list.name })}
+                            onClick={() => setShareTarget({ id: list.id, name: list.name, items: list.items || [] })}
                             className="text-gray-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer shrink-0 mt-0.5"
                             title="Compartilhar lista"
                           >
@@ -833,8 +833,8 @@ export default function Home() {
               <div className="fixed inset-0 bg-gray-500/75 dark:bg-black/70 transition-opacity" onClick={() => { if (!isEditMode) setShowDetailsModal(false); }}></div>
 
               <div className="flex min-h-full items-center justify-center p-4 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-4 text-center">
-                <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-96px)] sm:max-h-[85vh] flex flex-col">
-                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="relative transform overflow-hidden rounded-2xl sm:rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full sm:my-8 sm:max-w-3xl max-h-[calc(100dvh-120px)] sm:max-h-[85vh] flex flex-col">
+                  <div className="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
                     <div className="sm:flex sm:items-start">
                       <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-orange-100 sm:mx-0 sm:size-10">
                         {(() => {
@@ -989,14 +989,14 @@ export default function Home() {
                                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{item.details}</span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                                      <div className="flex items-center gap-0.5 bg-white dark:bg-gray-900 rounded-lg px-1.5 py-1">
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <div className="flex items-center gap-0.5 bg-white dark:bg-gray-900 rounded-lg px-1 sm:px-1.5 py-1">
                                         <button type="button" onClick={() => handleUpdateItemQuantityDirect(item.id, -1)} className="text-orange-500 hover:text-orange-600 cursor-pointer">
-                                          <Minus className="w-3.5 h-3.5" />
+                                          <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                         </button>
-                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[20px] text-center">{item.quantity || 1}</span>
+                                        <span className="text-[10px] sm:text-xs font-medium text-gray-700 dark:text-gray-200 min-w-[16px] sm:min-w-[20px] text-center">{item.quantity || 1}</span>
                                         <button type="button" onClick={() => handleUpdateItemQuantityDirect(item.id, 1)} className="text-orange-500 hover:text-orange-600 cursor-pointer">
-                                          <Plus className="w-3.5 h-3.5" />
+                                          <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                         </button>
                                       </div>
                                       <button
@@ -1010,10 +1010,10 @@ export default function Home() {
                                         title={item.photoUrl ? (expandedItemId === item.id ? "Ocultar imagem" : "Ver imagem") : "Sem imagem"}
                                         disabled={!item.photoUrl}
                                       >
-                                        <ImageIcon className="w-4 h-4" />
+                                        <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
                                       <button type="button" onClick={() => handleDeleteItemFromList(selectedList.id, item.id)} className="text-orange-500 hover:text-red-500 cursor-pointer" title="Excluir item">
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
                                     </div>
                                   </div>
@@ -1042,25 +1042,25 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
-                  {isEditMode ? (
-                    <>
-                      <button type="button" onClick={() => { setIsEditMode(false); setEditedListName(selectedList.name); setEditedListType(selectedList.type); setEditedItems(selectedList.items || []); }} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer">Cancelar</button>
-                      <button type="button" onClick={handleSaveEdit} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer">Salvar</button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
-                        <Share2 className="w-4 h-4" />
-                        Compartilhar
-                      </button>
-                      <button type="button" onClick={() => setIsEditMode(true)} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
-                        <Edit2 className="w-4 h-4" />
-                        Editar
-                      </button>
-                    </>
-                  )}
+                  <div className="bg-gray-50 dark:bg-gray-950 px-4 py-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:px-6 flex-shrink-0">
+                    {isEditMode ? (
+                      <>
+                        <button type="button" onClick={() => { setIsEditMode(false); setEditedListName(selectedList.name); setEditedListType(selectedList.type); setEditedItems(selectedList.items || []); }} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer">Cancelar</button>
+                        <button type="button" onClick={handleSaveEdit} className="inline-flex w-full justify-center rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs sm:w-auto cursor-pointer">Salvar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setShareTarget({ id: selectedList.id, name: selectedList.name, items: selectedList.items || [] })} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                          <Share2 className="w-4 h-4" />
+                          Compartilhar
+                        </button>
+                        <button type="button" onClick={() => setIsEditMode(true)} className="inline-flex w-full justify-center rounded-full bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 sm:w-auto cursor-pointer items-center gap-2">
+                          <Edit2 className="w-4 h-4" />
+                          Editar
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1070,6 +1070,7 @@ export default function Home() {
             <ShareModal
               listId={shareTarget.id}
               listName={shareTarget.name}
+              items={shareTarget.items || []}
               onClose={() => setShareTarget(null)}
             />
           )}
